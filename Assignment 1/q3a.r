@@ -43,7 +43,7 @@ percep <- function(x1, x2, y) {
     WT <- matrix(rep(1, 3), nrow=1, ncol=3);
 
     iter <- 0;
-    limit <- 1000;
+    limit <- 15000;
     while (iter < limit) {
         H <- sign(WT %*% X);
         fail <- i[H[i] * y[i] < 0];

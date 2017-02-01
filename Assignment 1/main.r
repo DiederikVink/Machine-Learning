@@ -12,8 +12,17 @@ main <- function() {
     #perceptron(4,inc,a,b);
     #perceptron(10,inc,a,b);
     coeff <- perceptron(100,inc,a,b); #q3a
-    #get_intersects(a, b, coeff$a, coeff$b);
-    get_intersects(a, b, 2, 0.5);
+    get_intersects(a, b, coeff$a, coeff$b);
+    coeff <- perceptron(100,inc,a,b); #q3a
+    get_intersects(a, b, coeff$a, coeff$b);
+    coeff <- perceptron(200,inc,a,b); #q3a
+    get_intersects(a, b, coeff$a, coeff$b);
+    coeff <- perceptron(300,inc,a,b); #q3a
+    get_intersects(a, b, coeff$a, coeff$b);
+    coeff <- perceptron(400,inc,a,b); #q3a
+    get_intersects(a, b, coeff$a, coeff$b);
+    coeff <- perceptron(500,inc,a,b); #q3a
+    get_intersects(a, b, coeff$a, coeff$b);
     
 
 }
