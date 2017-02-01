@@ -3,29 +3,36 @@
 perceptron <- function(size, inc, m, c) {
     data <- gen_data(size, inc, m, c);
     class <- classify(data$dist, data$y);
-    w <- percep(data$x, data$dist, class);
-    plot(data$x, data$dist);
+    w <- percep(data$x, data$dist, class$posneg);
+    plot(data$x, data$dist, col=class$color);
     lines(data$x, data$y, col="blue");
-    lines(data$x, w, col = "red");
+    lines(data$x, w$line, col = "red");
+    return(list(a=w$a, b=w$b));
 }
 
 gen_data <- function(size, inc, m, c) {
-    x <- seq(1, size+1, inc);
-    y <- (m*x) + c; 
+    x <- seq(0, 1, inc/(size-1));
+    x <- c(1, x);
+    y <- (m*x) + c;
     noise <- rnorm(size+1, mean=0, sd=150);
     dist <- y + noise;
+    dist <- abs(dist);
+    dist <- dist/max(dist);
 
     return(list(dist=dist,x=x,y=y));
 }
 
 classify <- function(dist, y) {
    x <- seq(1, length(y));
+   color <- seq(1, length(y));
    pos <- x[dist[x] > y[x]];
    neg <- x[dist[x] <= y[x]];
    y[pos] <- -1;
    y[neg] <- 1;
+   color[pos] <- 'blue';
+   color[neg] <- 'red';
 
-   return(y);
+   return(list(posneg=y, color=color));
 }
 
 percep <- function(x1, x2, y) {
@@ -36,7 +43,7 @@ percep <- function(x1, x2, y) {
     WT <- matrix(rep(1, 3), nrow=1, ncol=3);
 
     iter <- 0;
-    limit <- 50000;
+    limit <- 1000;
     while (iter < limit) {
         H <- sign(WT %*% X);
         fail <- i[H[i] * y[i] < 0];
@@ -50,27 +57,9 @@ percep <- function(x1, x2, y) {
         }
     }
 
-    line <- line_calc(WT,X);
-
-    return (line);    
-}
-
-line_calc <- function(w, x){
-    return(-w[2]/w[3]*x[2,] + w[1]/w[3]);
-}
-
-main <- function() {
-    inc <- 1;
-    m <- 2;
-    c <- 3;
-    #perceptron(2,inc,m,c);
-    #perceptron(4,inc,m,c);
-    #perceptron(10,inc,m,c);
-    perceptron(100,inc,m,c);
+    a <- -WT[2]/WT[3];
+    b <- -WT[1]/WT[3];
+    line <- a*X[2,] + b;
     
-
-    
-
+    return(list(a=a, b=b, line=line));    
 }
-
-main()
