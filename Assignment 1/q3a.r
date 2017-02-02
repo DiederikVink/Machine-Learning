@@ -4,9 +4,9 @@ perceptron <- function(size, inc, m, c) {
     data <- gen_data(size, inc, m, c);
     class <- classify(data$dist, data$y);
     w <- percep(data$x, data$dist, class$posneg);
-    plot(data$x, data$dist, col=class$color);
-    lines(data$x, data$y, col="blue");
-    lines(data$x, w$line, col = "red");
+    #plot(data$x, data$dist, col=class$color);
+    #lines(data$x, data$y, col="blue");
+    #lines(data$x, w$line, col = "red");
     return(list(a=w$a, b=w$b));
 }
 

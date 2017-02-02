@@ -34,11 +34,11 @@ select_case <- function(x0, line1, line2) {
     return(list(case=case, y1=y1, y2=y2));
 }
 
-part_integral <- function(lim1, lim2, lim3, y) {
+line_integral <- function(lim1, lim2, lim3, y) {
     return((.5 * y$a * (lim2^2 - lim1^2)) + ((y$b - 1) * lim2) - (y$b * lim1) + lim3)
 }
 
-case1_3_21 <- function(y1, y2, x0, case) {
+case <- function(y1, y2, x0, case) {
     if (y1$bot <= 0) {q <- 0;}
     else if ((y1$bot > 0) && (y1$bot < 1)) {q <- y1$bot;}
     else if (y1$bot >= 1) {return(0);}
@@ -51,32 +51,52 @@ case1_3_21 <- function(y1, y2, x0, case) {
     else if ((y2$bot > 0) && (y2$bot < 1)) {t <- y2$bot;}
     else if (y2$bot >= 1) {t <- 1;}
     
-    if (y2$top <= 0) {return(0);}
+    if (y2$top <= 0) {
+        if(case == 22) {s <- 0;}
+        else if (case == 21) {return(0);}
+    }
     else if ((y2$top > 0) && (y2$top < 1)) {s <- y2$top;}
     else if (y2$top >= 1) {s <- 1;}
 
     if ((case == 1) || (case == 3)) {
-        return(part_integral(q,r,1,y1)-part_integral(t,s,1,y2));
+        return(line_integral(q,r,1,y1)-line_integral(t,s,1,y2));
     }
     else if (case == 21) {
-        i1 <- part_integral(t, x0, x0, y2) - part_integral(q, x0, x0, y1);
-        i2 <- part_integral(x0, r, 1, y1) - part_integral(x0, s, 1, y2);
+        i1 <- line_integral(t, x0, x0, y2) - line_integral(q, x0, x0, y1);
+        i2 <- line_integral(x0, r, 1, y1) - line_integral(x0, s, 1, y2);
         return(i1 + i2);
+    }
+    else if (case == 22) {
+        y1_ <- y1;
+        y1_$a <- -y1$a;
+        y1_$b <- y1$a + y1$b;
+
+        y2_ <- y2;
+        y2_$a <- -y2$a;
+        y2_$b <- y2$a + y2$b;
+        
+        i1 <- line_integral(q, x0, x0, y1) + line_integral(x0, t, t, y2);
+        i2 <- line_integral(1-r, 1-x0, 1-x0, y2_) + line_integral(1-x0, 1-s, 1-s, y1_);
+
+        return(1-i1-(-i2));
     }
 }
 
-case2 <- function(y1, y2, x0) {
-}
-
-get_intersects <- function(a, b, c, d) {
+areas <- function(a, b, c, d) {
     x0 <- intersect(a, b, c, d);
     line1 <- list(a=a, b=b, bot=intersect(a, b, 0, 0), top=intersect(a, b, 0, 1));
     line2 <- list(a=c, b=d, bot=intersect(c, d, 0, 0), top=intersect(c, d, 0, 1));
     sel <- select_case(x0, line1, line2);
-    if ((sel$case == 1) || (sel$case == 3) || (sel$case == 21)) {
-        res <- case1_3_21(sel$y1, sel$y2, x0, sel$case);
-    }
-    print(res);
+    res <- case(sel$y1, sel$y2, x0, sel$case);
+    return(res);
+}
+
+non_hoeffdings <- function(error) {
+    return(t(apply(error, 1, sort)));
+}
+
+hoeffdings <- function(error) {
+    log(0.05)/2*n
 }
 
 intersect <- function(a, b, c, d) {
