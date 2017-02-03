@@ -19,6 +19,7 @@ main <- function() {
     epsilon <- c();
 
     timer <- proc.time();
+    
     for(i in x) {
         for (j in 1:iter) {
             coeff <- perceptron(incr*i, inc, a, b);
@@ -26,9 +27,12 @@ main <- function() {
             epsilon[i] <- sqrt(-log(0.05)/(2*incr*i));
         }
     }
+
+    #j <- seq(1,iter);
+    #test <- mapply(error_epsilon, x, j, list(incr, inc, a, b, error, epsilon));
+
     total_time <- proc.time() - timer;
     
-
     
     
     non_hoeff <- non_hoeffdings(error);

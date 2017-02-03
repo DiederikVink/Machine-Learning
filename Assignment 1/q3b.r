@@ -99,6 +99,13 @@ hoeffdings <- function(error) {
     log(0.05)/2*n
 }
 
+error_epsilon <- function(i, j, vars) {
+    coeff <- perceptron(incr*i, inc, a, b);
+    vars$error[i,j] <- areas(a, b, coeff$a, coeff$b);
+    vars$epsilon[i] <- sqrt(-log(0.05)/(2*incr*i));
+    return(list(error=error, epsilon=epsilon));
+}
+
 intersect <- function(a, b, c, d) {
     return((d-b)/(a-c));
 }
