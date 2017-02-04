@@ -10,37 +10,55 @@ main <- function() {
     b <- 0.1;
     #perceptron(2,inc,a,b);
     #perceptron(4,inc,a,b);
-    #perceptron(10,inc,a,b);
+    #perceptron(100,inc,a,b);
     
     iter = 100;
     incr <- 50;
+    gamma <- 0.3;
     x <- seq(1,500/incr);
     error <- matrix( , nrow = length(x), ncol = iter);
     epsilon <- c();
 
-    timer <- proc.time();
-    
-    for(i in x) {
-        for (j in 1:iter) {
-            coeff <- perceptron(incr*i, inc, a, b);
-            error[i,j] <- areas(a, b, coeff$a, coeff$b);
-            epsilon[i] <- sqrt(-log(0.05)/(2*incr*i));
+    if (gamma == 0) {
+        timer <- proc.time();
+        for(i in x) {
+            for (j in 1:iter) {
+                coeff <- perceptron(incr*i, inc, a, b, gamma);
+                error[i,j] <- areas(a, b, coeff$a, coeff$b, gamma, 0);
+                epsilon[i] <- sqrt(-log(0.05)/(2*incr*i));
+            }
         }
+        total_time <- proc.time() - timer;
+    }
+    else {
+        error1 <- matrix( , nrow = length(x), ncol = iter);
+        error2 <- matrix( , nrow = length(x), ncol = iter);
+        timer <- proc.time();
+        for(i in x) {
+            for (j in 1:iter) {
+                coeff <- perceptron(incr*i, inc, a, b, gamma);
+                error1[i,j] <- areas(a, b + gamma, coeff$a, coeff$b, gamma, 1);
+                error2[i,j] <- areas(a, b - gamma, coeff$a, coeff$b, gamma, -1);
+                epsilon[i] <- sqrt(-log(0.05)/(2*incr*i));
+            }
+        }
+        total_time <- proc.time() - timer;
+        error <- error1 + error2;
     }
 
     #j <- seq(1,iter);
     #test <- mapply(error_epsilon, x, j, list(incr, inc, a, b, error, epsilon));
 
-    total_time <- proc.time() - timer;
-    
-    
+    print(error);
     
     non_hoeff <- non_hoeffdings(error);
     mean <- rowMeans(error);
     hoeff_5 <- mean - epsilon;
     hoeff_95 <- mean + epsilon;
     maximum <- max(hoeff_95)+0.001;
+    #if (max(non_hoeff[,95]) > maximum) {maximum <- max(non_hoeff[,95]) + 0.001;}
     minimum <- min(hoeff_5)-0.001;
+    #if (min(non_hoeff[,5]) < minimum) {minimum <- min(non_hoeff[,5]) - 0.001;}
 
     plot(x*incr, seq(minimum,maximum-0.0000001,(maximum-minimum)/(500/incr)), type='n', main = "", xlab = "sample size", ylab = "Error probability");
     lines(x*incr, mean, type = 'p');

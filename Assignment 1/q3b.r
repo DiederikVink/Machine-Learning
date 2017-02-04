@@ -21,24 +21,27 @@ select_case <- function(x0, line1, line2) {
         if (line1$top < line2$top) {
             y1 <- line1;
             y2 <- line2;
+            fixed <- 1;
         }
         else if (line1$top > line2$top) {
             y1 <- line2;
             y2 <- line1;
+            fixed <- 2;
         }
     }
     else if (case == 22) {
         y1 <- line1;
         y2 <- line2;
+        fixed <- 1;
     }
-    return(list(case=case, y1=y1, y2=y2));
+    return(list(case=case, y1=y1, y2=y2, fixed=fixed));
 }
 
 line_integral <- function(lim1, lim2, lim3, y) {
     return((.5 * y$a * (lim2^2 - lim1^2)) + ((y$b - 1) * lim2) - (y$b * lim1) + lim3)
 }
 
-case <- function(y1, y2, x0, case) {
+case <- function(y1, y2, x0, case, gamma, pos, fixed) {
     if (y1$bot <= 0) {q <- 0;}
     else if ((y1$bot > 0) && (y1$bot < 1)) {q <- y1$bot;}
     else if (y1$bot >= 1) {return(0);}
@@ -64,7 +67,27 @@ case <- function(y1, y2, x0, case) {
     else if (case == 21) {
         i1 <- line_integral(t, x0, x0, y2) - line_integral(q, x0, x0, y1);
         i2 <- line_integral(x0, r, 1, y1) - line_integral(x0, s, 1, y2);
-        return(i1 + i2);
+        if (gamma  == 0) {
+            return(i1 + i2);
+        }
+        else {
+            if (pos == 1) {
+                if (fixed == 2) {
+                    return(i2);
+                }
+                else if (fixed == 1) {
+                    return(i1);
+                }
+            }
+            else if (pos == -1) {
+                if (fixed == 2) {
+                    return(i1);
+                }
+                else if (fixed == 1) {
+                    return(i2);
+                }
+            }
+        }
     }
     else if (case == 22) {
         y1_ <- y1;
@@ -82,12 +105,12 @@ case <- function(y1, y2, x0, case) {
     }
 }
 
-areas <- function(a, b, c, d) {
+areas <- function(a, b, c, d, gamma, pos) {
     x0 <- intersect(a, b, c, d);
     line1 <- list(a=a, b=b, bot=intersect(a, b, 0, 0), top=intersect(a, b, 0, 1));
     line2 <- list(a=c, b=d, bot=intersect(c, d, 0, 0), top=intersect(c, d, 0, 1));
     sel <- select_case(x0, line1, line2);
-    res <- case(sel$y1, sel$y2, x0, sel$case);
+    res <- case(sel$y1, sel$y2, x0, sel$case, gamma, pos, sel$fixed);
     return(res);
 }
 
