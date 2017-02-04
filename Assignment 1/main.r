@@ -13,10 +13,14 @@ main <- function() {
     perceptron(1000,inc,a,b,0);
     
     iter = 100;
-    incr <- 100;
+    incr <- 50;
     gamma <- 0;
     x <- seq(1,500/incr);
     error <- matrix( , nrow = length(x), ncol = iter);
+    updates <- matrix( , nrow=length(x), ncol=iter);
+    allt <- matrix( , nrow=length(x), ncol=iter);
+    rho <- matrix( , nrow=length(x), ncol=iter);
+    w <- matrix(, nrow=length(x), ncol=iter);
     epsilon <- c();
 
     if (gamma == 0) {
@@ -24,6 +28,10 @@ main <- function() {
         for(i in x) {
             for (j in 1:iter) {
                 coeff <- perceptron(incr*i, inc, a, b, gamma);
+                updates[i,j] <- coeff$iter;
+                #allt[i,j] <- coeff$t;
+                #rho[i,j] <- coeff$rho;
+                #w[i,j] <- coeff$w;
                 error[i,j] <- areas(a, b, coeff$a, coeff$b, gamma, 0);
                 epsilon[i] <- sqrt(-log(0.05)/(2*incr*i));
             }
@@ -37,6 +45,10 @@ main <- function() {
         for(i in x) {
             for (j in 1:iter) {
                 coeff <- perceptron(incr*i, inc, a, b, gamma);
+                updates[i,j] <- coeff$iter;
+                #allt[i,j] <- coeff$t;
+                #rho[i,j] <- coeff$rho;
+                #w[i,j] <- coeff$w;
                 error1[i,j] <- areas(a, b + gamma, coeff$a, coeff$b, gamma, 1);
                 error2[i,j] <- areas(a, b - gamma, coeff$a, coeff$b, gamma, -1);
                 epsilon[i] <- sqrt(-log(0.05)/(2*incr*i));
@@ -49,20 +61,38 @@ main <- function() {
     #j <- seq(1,iter);
     #test <- mapply(error_epsilon, x, j, list(incr, inc, a, b, error, epsilon));
 
-    print(error);
-    
+    #count <- 0;
+    #index <- matrix(,nrow=nrow(rho),ncol=2);
+
+    #for (i in 1:nrow(rho)) {
+    #    for (j in 1:ncol(rho)) {
+    #        if (rho[i,j] > 0) {
+    #            count = count + 1;
+    #            index[i,count] <- j;
+    #        }
+    #        if (count == 2) {
+    #            count <- 0;
+    #            break;
+    #        }
+    #    }
+    #}
+    #print(index);
+
     non_hoeff <- non_hoeffdings(error);
-    mean <- rowMeans(error);
-    hoeff_5 <- mean - epsilon;
-    hoeff_95 <- mean + epsilon;
+    error_mean <- rowMeans(error);
+    update_mean <- rowMeans(updates);
+    t_mean <- rowMeans(allt);
+
+    hoeff_5 <- error_mean - epsilon;
+    hoeff_95 <- error_mean + epsilon;
     maximum <- max(hoeff_95)+0.001;
     #if (max(non_hoeff[,95]) > maximum) {maximum <- max(non_hoeff[,95]) + 0.001;}
     minimum <- min(hoeff_5)-0.001;
     #if (min(non_hoeff[,5]) < minimum) {minimum <- min(non_hoeff[,5]) - 0.001;}
 
     plot(x*incr, seq(minimum,maximum-0.0000001,(maximum-minimum)/(500/incr)), type='n', main = "", xlab = "sample size", ylab = "Error probability");
-    lines(x*incr, mean, type = 'p');
-    lines(lowess(x*incr, mean));
+    lines(x*incr, error_mean, type = 'p');
+    lines(lowess(x*incr, error_mean));
     lines(x*incr, non_hoeff[,5], col="blue", type = 'p');
     lines(lowess(x*incr, non_hoeff[,5]), col="blue");
     lines(x*incr, non_hoeff[,95], col="red", type = 'p');
