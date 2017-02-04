@@ -1,14 +1,14 @@
 #!/usr/bin/env Rscript
 
 perceptron <- function(size, inc, m, c, gamma) {
-    if (gamma == 0) {
-        data <- gen_data(size, inc, m, c);
-        class <- classify(data$dist, data$y);
-    }
-    else {
+    #if (gamma == 0) {
+    #    data <- gen_data(size, inc, m, c);
+    #    class <- classify(data$dist, data$y);
+    #}
+    #else {
         data <- gen_data_gamma_2(size, inc, m, c, gamma);
         class <- list(posneg = data$posneg, color = data$color);
-    }
+    #}
     w <- percep(data$x, data$dist, class$posneg);
 
     #plot(data$x, data$dist, col=class$color);
@@ -16,7 +16,7 @@ perceptron <- function(size, inc, m, c, gamma) {
     #lines(data$x2, data$l2, col = "red");
     #lines(data$x, data$y, col="green");
     #lines(data$x, w$line, col = "orange");
-    return(list(a=w$a, b=w$b));
+    return(list(a=w$a, b=w$b, iter=w$iter));
 }
 
 gen_data_gamma_2 <- function(size, inc, m, c, gamma) {
@@ -112,7 +112,8 @@ gen_data_gamma <- function(size, inc, m, c, gamma) {
 gen_data <- function(size, inc, m, c) {
     x <- seq(0, 1, inc/(size-1));
     y <- (m*x) + c;
-    noise <- rnorm(size+1, mean=0, sd=150);
+    #noise <- rnorm(size, mean=0, sd=150);
+    noise <- runif(size,-1,1);
     dist <- y + noise;
     dist <- abs(dist);
     dist <- dist/max(dist);
@@ -141,8 +142,9 @@ percep <- function(x1, x2, y) {
     WT <- matrix(rep(1, 3), nrow=1, ncol=3);
 
     iter <- 0;
-    limit <- 15000;
+    limit <- 200000;
     while (iter < limit) {
+        if (iter == 14999) {print("here");}
         H <- sign(WT %*% X);
         fail <- i[H[i] * y[i] < 0];
 
@@ -159,5 +161,5 @@ percep <- function(x1, x2, y) {
     b <- -WT[1]/WT[3];
     line <- a*X[2,] + b;
     
-    return(list(a=a, b=b, line=line));    
+    return(list(a=a, b=b, line=line, iter=iter));
 }

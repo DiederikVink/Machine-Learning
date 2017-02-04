@@ -62,7 +62,12 @@ case <- function(y1, y2, x0, case, gamma, pos, fixed) {
     else if (y2$top >= 1) {s <- 1;}
 
     if ((case == 1) || (case == 3)) {
-        return(line_integral(q,r,1,y1)-line_integral(t,s,1,y2));
+        if (gamma == 0) {
+            return(line_integral(q,r,1,y1)-line_integral(t,s,1,y2));
+        }
+        else {
+            return(0);
+        }
     }
     else if (case == 21) {
         i1 <- line_integral(t, x0, x0, y2) - line_integral(q, x0, x0, y1);
@@ -90,18 +95,23 @@ case <- function(y1, y2, x0, case, gamma, pos, fixed) {
         }
     }
     else if (case == 22) {
-        y1_ <- y1;
-        y1_$a <- -y1$a;
-        y1_$b <- y1$a + y1$b;
+        if (gamma == 0) {
+            y1_ <- y1;
+            y1_$a <- -y1$a;
+            y1_$b <- y1$a + y1$b;
 
-        y2_ <- y2;
-        y2_$a <- -y2$a;
-        y2_$b <- y2$a + y2$b;
-        
-        i1 <- line_integral(q, x0, x0, y1) + line_integral(x0, t, t, y2);
-        i2 <- line_integral(1-r, 1-x0, 1-x0, y2_) + line_integral(1-x0, 1-s, 1-s, y1_);
+            y2_ <- y2;
+            y2_$a <- -y2$a;
+            y2_$b <- y2$a + y2$b;
+            
+            i1 <- line_integral(q, x0, x0, y1) + line_integral(x0, t, t, y2);
+            i2 <- line_integral(1-r, 1-x0, 1-x0, y2_) + line_integral(1-x0, 1-s, 1-s, y1_);
 
-        return(1-i1-(-i2));
+            return(1-i1-(-i2));
+        }
+        else {
+            return(0);
+        }
     }
 }
 

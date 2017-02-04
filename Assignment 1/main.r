@@ -10,11 +10,11 @@ main <- function() {
     b <- 0.1;
     #perceptron(2,inc,a,b);
     #perceptron(4,inc,a,b);
-    #perceptron(100,inc,a,b);
+    perceptron(1000,inc,a,b,0);
     
     iter = 100;
-    incr <- 50;
-    gamma <- 0.3;
+    incr <- 100;
+    gamma <- 0;
     x <- seq(1,500/incr);
     error <- matrix( , nrow = length(x), ncol = iter);
     epsilon <- c();
