@@ -26,6 +26,7 @@ set_up <- function(name) {
 }
 
 main <- function() {
+    #extract
     zip_vars <- set_up("data/zip.train");
     feature_vars <- set_up("data/features.train");
     zip_test_vars <- set_up("data/zip.test");
@@ -57,6 +58,7 @@ main <- function() {
     plot(x,zip_learned$rfdata);
     x <- seq(1,length(feature_learned$rfdata));
     plot(x,feature_learned$rfdata, type='l');
+    lines(x, feature_lin_learned$rfdata, type='l', col = 'blue');
 }
 
 linear_reg <- function(X, Y) {
@@ -102,6 +104,48 @@ percep_mod <- function(X, WT, y) {
         wdata <- rbind(wdata, WT);
         fdata <- c(fdata, fail$fail_num);
         rfdata <- c(rfdata, fail$fail_num/length(y));
+        
+
+        if ((fail$fail_num < 1) || iter == 1000) {
+            break;
+        }
+        else {
+            WT <- WT + y[fail$fail[1]] * t(X[,fail$fail[1]]);
+            iter <- iter + 1;
+        }
+    }
+
+    wdata <- wdata[-1,];
+    best <- which.min(fdata);
+    WT <- wdata[best,];
+
+    a <- -WT[2]/WT[3];
+    b <- -WT[1]/WT[3];
+    line <- a*X[2,] + b;
+    
+    return(list(a=a, b=b, line=line, iter=iter, wt=WT, x=X, wdata=wdata, fdata=fdata, rfdata=rfdata));
+}
+
+percep_mod_1 <- function(X, WT, y) {
+    wdata <- matrix(,ncol=ncol(WT));
+    fdata <- c();
+    rfdata <- c();
+    minimum <- ncol(X) + 1;
+    minW <- WT;
+
+    iter <- 0;
+    repeat {
+        fail <- test(X,WT,y);
+
+        if(fail$fail_num < minimum) {
+            minimum <- fail$fail_num;
+            minW <- WT;
+        }
+
+        wdata <- rbind(wdata, minW);
+        fdata <- c(fdata, minimum);
+        rfdata <- c(rfdata, minimum/length(y));
+        
 
         if ((fail$fail_num < 1) || iter == 1000) {
             break;

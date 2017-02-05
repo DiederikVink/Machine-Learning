@@ -1,10 +1,10 @@
 #!/usr/bin/env Rscript
 source("q3a.r")
 
-select_case <- function(x0, line1, line2) {
-    y0 <- x0 + 0.1;
+select_case <- function(x0, line1, line2, a, b) {
+    y0 <- (a*x0) + b;
     # determine which case the current situation is
-    if (x0 <= 0) {case <- 1;}
+    if ((x0 <= 0) || (y0 <= 0)) {case <- 1;}
     else if (((x0 > 0) && (y0 >= 0)) && ((x0 >= 1) || (y0 >= 1))) {case <- 3;}
     else if ((x0 > 0) && (y0 > 0) && (y0 < 1) && (x0 < 1)) {
         if (sign(line1$a) == sign(line2$a)){
@@ -14,8 +14,8 @@ select_case <- function(x0, line1, line2) {
             case <- 22;            
         }
     }
-    
-    if ((case == 1) || (case == 3) || (case == 21)) {
+
+    if ((case == 1) || (case == 21)) {
         # look for whether line2 intersection or line1 intersection with the top of the box
         # intersect
         if (line1$top < line2$top) {
@@ -24,6 +24,18 @@ select_case <- function(x0, line1, line2) {
             fixed <- 1;
         }
         else if (line1$top > line2$top) {
+            y1 <- line2;
+            y2 <- line1;
+            fixed <- 2;
+        }
+    }
+    else if (case == 3) {
+        if (line1$bot < line2$bot) {
+            y1 <- line1;
+            y2 <- line2;
+            fixed <- 1;
+        }
+        else if (line1$bot > line2$bot) {
             y1 <- line2;
             y2 <- line1;
             fixed <- 2;
@@ -62,11 +74,27 @@ case <- function(y1, y2, x0, case, gamma, pos, fixed) {
     else if (y2$top >= 1) {s <- 1;}
 
     if ((case == 1) || (case == 3)) {
+        inte <- line_integral(q,r,1,y1) - line_integral(t,s,1,y2);
         if (gamma == 0) {
-            return(line_integral(q,r,1,y1)-line_integral(t,s,1,y2));
+            return(inte);
         }
         else {
-            return(0);
+            if (pos == 1) {
+                if (fixed == 2) {
+                    return(inte);
+                }
+                else {
+                    return(0);
+                }
+            }
+            else if (pos == -1) {
+                if (fixed == 1) {
+                    return(inte);
+                }
+                else {
+                    return(0);
+                }
+            }
         }
     }
     else if (case == 21) {
@@ -119,7 +147,7 @@ areas <- function(a, b, c, d, gamma, pos) {
     x0 <- intersect(a, b, c, d);
     line1 <- list(a=a, b=b, bot=intersect(a, b, 0, 0), top=intersect(a, b, 0, 1));
     line2 <- list(a=c, b=d, bot=intersect(c, d, 0, 0), top=intersect(c, d, 0, 1));
-    sel <- select_case(x0, line1, line2);
+    sel <- select_case(x0, line1, line2, a, b);
     res <- case(sel$y1, sel$y2, x0, sel$case, gamma, pos, sel$fixed);
     return(res);
 }
