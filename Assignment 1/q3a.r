@@ -1,5 +1,31 @@
 #!/usr/bin/env Rscript
 
+q3a_main <- function(inc, a, b) {
+    data <- perceptron(2,inc,a,b,0);
+    generate_graphs(data$x, data$dist, data$color, data$x1, data$l1, data$x2, data$l2, data$y, data$line, 2);
+    data <- perceptron(4,inc,a,b,0);
+    generate_graphs(data$x, data$dist, data$color, data$x1, data$l1, data$x2, data$l2, data$y, data$line, 4);
+    data <- perceptron(10,inc,a,b,0);
+    generate_graphs(data$x, data$dist, data$color, data$x1, data$l1, data$x2, data$l2, data$y, data$line, 10);
+    data <- perceptron(100,inc,a,b,0);
+    generate_graphs(data$x, data$dist, data$color, data$x1, data$l1, data$x2, data$l2, data$y, data$line, 100);
+
+}
+
+generate_graphs <- function(x, dist, color, x1, l1, x2, l2, y, line, size) {
+    main_title <- paste0("Dataset of size: ", size);
+    plot(x, dist, 
+        col=color,
+        main = main_title,
+        xlab = "Feature 1 value",
+        ylab = "Feature 2 value");
+    lines(x1, l1, col = "blue");
+    lines(x2, l2, col = "red");
+    lines(x, y, col="green");
+    lines(x, line, col = "orange");
+
+}
+
 perceptron <- function(size, inc, m, c, gamma) {
     #if (gamma == 0) {
     #    data <- gen_data(size, inc, m, c);
@@ -15,31 +41,23 @@ perceptron <- function(size, inc, m, c, gamma) {
     WT <- matrix(rep(1, 3), nrow=1, ncol=3);
 
     w <- percep(X, WT, class$posneg);
+    
+    ywTx <- class$posneg * (w$wt %*% w$x);
+    magx <- diag(t(w$x) %*% w$x);
 
-    #wtx <- t(w$wt %*% w$x);
-    #allrho <- c();
-    #magx <- c();
-    #for(i in 1:ncol(w$x)) {
-    #    allrho[i] <- class$posneg[i] * wtx[i];
-    #    magx[i] <- sum(w$x[,i]^2);
+    rho <- min(ywTx);
+    magw <- sum(w$wt^2);
+    r_sq <- max(magx);
+
+    t <- ((r_sq) * (magw^2))/(rho^2);
+
+    #w <- percep1(data$x, data$dist, class$posneg);
+    #w$wt<-w$iter<-rho<-t<-0;
+    #if (w$broke) {
+    #    print("----------------");
     #}
-    #rho <- min(allrho);
-    #magw <- sum(w$wt^2);
-    #r <- max(magx);
 
-    #t <- ((r^2) * (magw^2))/(rho^2);
-
-    t <- 0;
-    rho <- 0;
-
-
-    #plot(data$x, data$dist, col=class$color);
-    #lines(data$x1, data$l1, col = "blue");
-    #lines(data$x2, data$l2, col = "red");
-    #lines(data$x, data$y, col="green");
-    #lines(data$x, w$line, col = "orange");
-
-    return(list(a=w$a, b=w$b, iter=w$iter, t=t, rho=rho, w=w$wt));
+    return(list(a=w$a, b=w$b, iter=w$iter, t=t, rho=rho, w=w$wt, broke=w$broke, x=data$x, dist=data$dist, color=class$color, x1=data$x1, x2=data$x2, l1=data$l1, l2=data$l2, y=data$y, line=w$line));
 }
 
 gen_data_gamma_2 <- function(size, inc, m, c, gamma) {
@@ -157,21 +175,60 @@ classify <- function(dist, y) {
    return(list(posneg=y, color=color));
 }
 
+percep1 <- function(x1, x2, y) {
+    x0 <- rep(1, length(x1));
+    i <- seq(1, length(x1));
+        
+    X <- matrix(c(x0, x1, x2), nrow = 3, ncol = length(x1), byrow = TRUE);
+    WT <- matrix(rep(1, 3), nrow=1, ncol=3);
+
+    broke <- 0;
+            
+    iter <- 0;
+    limit <- 15000;
+    while (iter < limit) {
+        H <- sign(WT %*% X);
+        fail <- i[H[i] * y[i] < 0];
+        
+        if (length(fail) < 1) {
+            iter <- limit;
+        }
+        else {
+            WT <- WT + y[fail[1]] * t(X[,fail[1]]);
+            iter <- iter + 1;
+            if (iter == limit) {
+                broke <- 1;
+            }
+        }
+    }
+    
+    a <- -WT[2]/WT[3];
+    b <- -WT[1]/WT[3];
+    line <- a*X[2,] + b;
+                
+    return(list(a=a, b=b, line=line, w=WT, broke=broke));    
+}
+
 percep <- function(X, WT, y) {
-    i <- seq(1, length(X[2,]));
+    i <- seq(1, ncol(X));
 
     fdata <- c();
     rfdata <- c();
-
+    
+    broke <- 0;
+    
     iter <- 0;
+    limit <- 15000;
     repeat {
         H <- sign(WT %*% X);
         fail <- i[H[i] * y[i] < 0];
 
         fdata <- c(fdata, length(fail));
         rfdata <- c(rfdata, length(fail)/length(y));
-
-        if ((length(fail) < 1) || iter == 200000) {
+        if ((length(fail) < 1) || iter == limit) {
+            if(iter == limit) {
+                broke <- 1;
+            }
             break;
         }
         else {
@@ -184,5 +241,5 @@ percep <- function(X, WT, y) {
     b <- -WT[1]/WT[3];
     line <- a*X[2,] + b;
     
-    return(list(a=a, b=b, line=line, iter=iter, wt=WT, x=X, fdata=fdata, rfdata=rfdata));
+    return(list(a=a, b=b, line=line, iter=iter, wt=WT, x=X, fdata=fdata, rfdata=rfdata, broke=broke));
 }
