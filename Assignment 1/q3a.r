@@ -15,6 +15,10 @@ q3a_main <- function(inc, a, b) {
     data <- perceptron(100,inc,a,b,0);
     generate_graphs(data$x, data$dist, data$color, data$x1, data$l1, data$x2, data$l2, data$y, data$line, 100);
 
+    # produces Figure 7. Eventhough this is not part of q3a, it is easiest to procure this graph
+    # in this area of the code.
+    data <- perceptron(1000,inc,1,0.1,0.1);
+    generate_graphs(data$x, data$dist, data$color, data$x1, data$l1, data$x2, data$l2, data$y, data$line, 1000);
 }
 
 generate_graphs <- function(x, dist, color, x1, l1, x2, l2, y, line, size) {

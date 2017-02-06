@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 source("q3a.r")
 
-q3b_main <- function(gamma) {
+q3b_main <- function(gamma, iter, main_title, fname, oname, fname2) {
     inc <- 1;
 
     # genearte the variables for the fixed line x2 = x1 + 0.1
@@ -9,7 +9,6 @@ q3b_main <- function(gamma) {
     b <- 0.1;
 
     # run the perceptron algorithm 100 times
-    iter <- 100;
     incr <- 100;
     # set up matrices and vectors used for iteration and data collection
     x <- seq(1,500/incr);
@@ -70,15 +69,27 @@ q3b_main <- function(gamma) {
     # calculate two viable w_* values for rho of each dataset size 
     w_star <- matrix(,nrow=1,ncol=3);
     j <- seq(1,iter);
+    max <- 2
     for(i in x) {
         pos <- j[rho[i,j]>0];
-        w_star <- rbind(w_star, head(w[pos*i,],2));
+        if (length(pos) < 2) {max <- length(pos);}
+        w_star <- rbind(w_star, head(w[pos*i,],max));
     }
 
     w_star <- w_star[-1,];
-    print("wstar");
-    print(w_star);
-
+    if (iter > 1) {
+        print("2 viable w_* values for positive rho");
+        print("100 itertations:")
+        print(w_star[1:2,]);
+        print("200 itertations:")
+        print(w_star[3:4,]);
+        print("300 itertations:")
+        print(w_star[5:6,]);
+        print("400 itertations:")
+        print(w_star[7:8,]);
+        print("500 itertations:")
+        print(w_star[9:10,]);
+    }
     # sort the error values in ascending order, to get empirical confidence intervals
     non_hoeff <- non_hoeffdings(error);
     # get mean values for each dataset size
@@ -90,30 +101,90 @@ q3b_main <- function(gamma) {
     hoeff_5 <- error_mean - epsilon;
     hoeff_95 <- error_mean + epsilon;
 
-    #set up and plot the graphs
-    if (gamma == 0) {
-        maximum <- max(hoeff_95)+0.075;
-        minimum <- min(hoeff_5)-0.001;
+    if (iter > 1) {
+        # print out vales for 3b3
+        print("Empirical non-hoeffding values");
+        print("Upper bound");
+        print(non_hoeff[,95]);
+        print("Lower bound");
+        print(non_hoeff[,95]);
+        print("Hoeffding calculated values");
+        print("Upper bound");
+        print(hoeff_95);
+        print("Lower bound");
+        print(hoeff_5);
+
+        #set up and plot the graphs
+        if (gamma == 0) {
+            maximum <- max(hoeff_95)+0.075;
+            minimum <- min(hoeff_5)-0.001;
+        }
+        else {
+            maximum <- max(non_hoeff[,95])+0.01;
+            minimum <- min(non_hoeff[,5])-0.001;
+        }
     }
     else {
-        maximum <- max(non_hoeff[,95])+0.01;
-        minimum <- min(non_hoeff[,5])-0.001;
+        maximum <- max(error_mean) + 0.005;
+        minimum <- min(error_mean);
     }
+
+
+    print("Run time calculations");
     print(total_time);
-    print(broke);
-    plot(x*incr, seq(minimum,maximum-0.0000001,(maximum-minimum)/(500/incr)), type='n', xlab = "sample size", ylab = "Error probability");
+
+    pdf(fname);
+    plot(x*incr, seq(minimum,maximum-0.0000001,(maximum-minimum)/(500/incr)), 
+        type='n', 
+        main = main_title,
+        xlab = "sample size", 
+        ylab = "Error probability");
     lines(x*incr, error_mean, type = 'p');
     lines(lowess(x*incr, error_mean));
-    lines(x*incr, non_hoeff[,5], col="blue", type = 'p');
-    lines(lowess(x*incr, non_hoeff[,5]), col="blue");
-    lines(x*incr, non_hoeff[,95], col="red", type = 'p');
-    lines(lowess(x*incr, non_hoeff[,95]), col = "red");
-    if (gamma == 0) {
-        lines(x*incr, hoeff_5, col="green", type = 'p');
-        lines(lowess(x*incr, hoeff_5), col = "green");
-        lines(x*incr, hoeff_95, col="orange", type = 'p');
-        lines(lowess(x*incr, hoeff_95), col = "orange");
+    if (iter > 1) {
+
+        lines(x*incr, non_hoeff[,5], col="blue", type = 'p');
+        lines(lowess(x*incr, non_hoeff[,5]), col="blue");
+        lines(x*incr, non_hoeff[,95], col="red", type = 'p');
+        lines(lowess(x*incr, non_hoeff[,95]), col = "red");
+        if (gamma == 0) {
+            lines(x*incr, hoeff_5, col="green", type = 'p');
+            lines(lowess(x*incr, hoeff_5), col = "green");
+            lines(x*incr, hoeff_95, col="orange", type = 'p');
+            lines(lowess(x*incr, hoeff_95), col = "orange");
+        }
+        else
+        {
+            if (iter > 1) {
+                maximum <- max(non_hoeff[,95])+0.01;
+                minimum <- min(non_hoeff[,5])-0.001;
+            }
+            else {
+                maximum <- max(error_mean) + 0.005;
+                minimum <- min(error_mean);
+            }
+            pdf(fname2);
+            plot(x*incr, seq(minimum,maximum-0.0000001,(maximum-minimum)/(500/incr)), 
+                type='n', 
+                main = main_title,
+                xlab = "sample size", 
+                ylab = "Error probability");
+            lines(x*incr, error_mean, type = 'p');
+            lines(lowess(x*incr, error_mean));
+            if (iter > 1) {
+                lines(x*incr, non_hoeff[,5], col="blue", type = 'p');
+                lines(lowess(x*incr, non_hoeff[,5]), col="blue");
+                lines(x*incr, non_hoeff[,95], col="red", type = 'p');
+                lines(lowess(x*incr, non_hoeff[,95]), col = "red");
+                lines(x*incr, hoeff_5, col="green", type = 'p');
+                lines(lowess(x*incr, hoeff_5), col = "green");
+                lines(x*incr, hoeff_95, col="orange", type = 'p');
+                lines(lowess(x*incr, hoeff_95), col = "orange");
+            }
+        }
     }
+
+    sink(oname, append = TRUE);
 }
 
 select_case <- function(x0, line1, line2, a, b) {
