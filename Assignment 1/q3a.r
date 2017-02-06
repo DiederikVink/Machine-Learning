@@ -1,6 +1,11 @@
 #!/usr/bin/env Rscript
 
 q3a_main <- function(inc, a, b) {
+
+    inc <- 1;
+    a <- 0.75;
+    b <- 0.2;
+    
     data <- perceptron(2,inc,a,b,0);
     generate_graphs(data$x, data$dist, data$color, data$x1, data$l1, data$x2, data$l2, data$y, data$line, 2);
     data <- perceptron(4,inc,a,b,0);
@@ -67,7 +72,7 @@ gen_data_gamma <- function(size, inc, m, c, gamma) {
     j <- 0;
     k <- 1;
     count <- 1;
-    # continue generating points until ther are 50 left of the line and 50 right of the line
+    # continue generating points until ther are 50 left of the line and 50 right of the line region (this includes gamma if it is not zero)
     while((i < (size/2)) || (j < (size/2))) {
         count <- count + 1;
         # generate unifromly distributed feature1(x) and feature2(y) coordinates
@@ -94,6 +99,7 @@ gen_data_gamma <- function(size, inc, m, c, gamma) {
     #sort the coordinates according to increasing feature1 values
     xysorted <- xdisty[,order(xdisty[1,])];
 
+    # color the dots according to what side of the original line they are on
     i <- seq(1,length(xysorted[1,]));
     pos <- i[xysorted[3,i] == 1];
     neg <- i[xysorted[3,i] == -1];
@@ -101,6 +107,7 @@ gen_data_gamma <- function(size, inc, m, c, gamma) {
     color[pos] <- 'blue';
     color[neg] <- 'red';
 
+    # produce the lines to represent all lines present (including the gamma offset lines if those exist)
     y <- (m*xysorted[1,]) + c;
     l1 <- (m*xysorted[1,pos]) + c + gamma;
     x1 <- xysorted[1,pos];
@@ -112,30 +119,33 @@ gen_data_gamma <- function(size, inc, m, c, gamma) {
 
 percep <- function(X, WT, y) {
     i <- seq(1, ncol(X));
-
-    fdata <- c();
-    rfdata <- c();
     
+    # record the amount of times the maximum number of iterations is reached
     broke <- 0;
     
     iter <- 0;
     limit <- 100000;
     repeat {
+        # find the value of H
         H <- sign(WT %*% X);
+        # find the amount of points that failed the classification using the current values of w
         fail <- i[H[i] * y[i] < 0];
 
+        # if nothing fails, or the iteration limit is reached, end the function
         if ((length(fail) < 1) || iter == limit) {
             if(iter == limit) {
                 broke <- 1;
             }
             break;
         }
+        # if one or more points failed, update w. Use the first point that failed
         else {
             WT <- WT + y[fail[1]] * t(X[,fail[1]]);
             iter <- iter + 1;
         }
     }
 
+    # calculate the a and b values for y = a*x + b from w, to be able to create a line for the Perceptron-generated line
     a <- -WT[2]/WT[3];
     b <- -WT[1]/WT[3];
     line <- a*X[2,] + b;
