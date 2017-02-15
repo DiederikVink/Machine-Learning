@@ -22,7 +22,7 @@ q3a_main <- function(inc, a, b) {
 }
 
 generate_graphs <- function(x, dist, color, x1, l1, x2, l2, y, line, size) {
-    fname <- paste0("q3a-",size, ".pdf");
+    fname <- paste0("results/Q2/q3a-",size, ".pdf");
     #fname <- paste0(fname, ".png");
     pdf(fname);
     main_title <- paste0("Dataset of size: ", size);

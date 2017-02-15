@@ -2,6 +2,8 @@
 source("q3a.r")
 
 q3b_main <- function(gamma, iter, main_title, fname, oname, fname2) {
+    sink(oname);
+
     inc <- 1;
 
     # genearte the variables for the fixed line x2 = x1 + 0.1
@@ -78,7 +80,7 @@ q3b_main <- function(gamma, iter, main_title, fname, oname, fname2) {
 
     w_star <- w_star[-1,];
     if (iter > 1) {
-        print("2 viable w_* values for positive rho");
+        print("\n2 viable w_* values for positive rho");
         print("100 itertations:")
         print(w_star[1:2,]);
         print("200 itertations:")
@@ -94,8 +96,16 @@ q3b_main <- function(gamma, iter, main_title, fname, oname, fname2) {
     non_hoeff <- non_hoeffdings(error);
     # get mean values for each dataset size
     error_mean <- rowMeans(error);
+    print("\nAverage Error");
+    print(error_mean);
     update_mean <- rowMeans(updates);
+    print("\nNumber of updates");
+    print(update_mean);
     t_mean <- rowMeans(t);
+    print("Theoretical bounds")
+    print(t_mean);
+
+
 
     # calculate the heoffding values for hte 90% confidence intervals
     hoeff_5 <- error_mean - epsilon;
@@ -103,12 +113,12 @@ q3b_main <- function(gamma, iter, main_title, fname, oname, fname2) {
 
     if (iter > 1) {
         # print out vales for 3b3
-        print("Empirical non-hoeffding values");
+        print("\nEmpirical non-hoeffding values");
         print("Upper bound");
         print(non_hoeff[,95]);
         print("Lower bound");
         print(non_hoeff[,95]);
-        print("Hoeffding calculated values");
+        print("\nHoeffding calculated values");
         print("Upper bound");
         print(hoeff_95);
         print("Lower bound");
@@ -130,24 +140,44 @@ q3b_main <- function(gamma, iter, main_title, fname, oname, fname2) {
     }
 
 
-    print("Run time calculations");
+    print("\nRun time calculations");
     print(total_time);
 
     pdf(fname);
     plot(x*incr, seq(minimum,maximum-0.0000001,(maximum-minimum)/(500/incr)), 
         type='n', 
         main = main_title,
-        xlab = "sample size", 
+        xlab = "Sample size", 
         ylab = "Error probability");
     lines(x*incr, error_mean, type = 'p');
     lines(lowess(x*incr, error_mean));
+    if (iter == 1) {
+            if (iter == 1) {
+                legend("topright", 
+                    c("Average Error"),
+                    col=c("black"),
+                    lty=c(1)
+                );
+            }
+    }
     if (iter > 1) {
-
+        if (gamma != 0) {
+            legend("topright", 
+                c("Empirical upper", "Empirical lower", "Average Error"),
+                col=c("red","blue","black"),
+                lty=c(1,1,1)
+            );
+        }
         lines(x*incr, non_hoeff[,5], col="blue", type = 'p');
         lines(lowess(x*incr, non_hoeff[,5]), col="blue");
         lines(x*incr, non_hoeff[,95], col="red", type = 'p');
         lines(lowess(x*incr, non_hoeff[,95]), col = "red");
         if (gamma == 0) {
+            legend("topright", 
+                c("Hoeffding upper", "Hoeffding lower", "Empirical upper", "Empirical lower", "Average Error"),
+                col=c("orange","green","red","blue","black"),
+                lty=c(1,1,1,1,1)
+            );
             lines(x*incr, hoeff_5, col="green", type = 'p');
             lines(lowess(x*incr, hoeff_5), col = "green");
             lines(x*incr, hoeff_95, col="orange", type = 'p');
@@ -155,23 +185,22 @@ q3b_main <- function(gamma, iter, main_title, fname, oname, fname2) {
         }
         else
         {
-            if (iter > 1) {
-                maximum <- max(non_hoeff[,95])+0.01;
-                minimum <- min(non_hoeff[,5])-0.001;
-            }
-            else {
-                maximum <- max(error_mean) + 0.005;
-                minimum <- min(error_mean);
-            }
+            maximum <- max(hoeff_95)+0.075;
+            minimum <- min(hoeff_5)-0.001;
             pdf(fname2);
             plot(x*incr, seq(minimum,maximum-0.0000001,(maximum-minimum)/(500/incr)), 
                 type='n', 
                 main = main_title,
-                xlab = "sample size", 
+                xlab = "Sample size", 
                 ylab = "Error probability");
             lines(x*incr, error_mean, type = 'p');
             lines(lowess(x*incr, error_mean));
             if (iter > 1) {
+                legend("topright", 
+                    c("Hoeffding upper", "Hoeffding lower", "Empirical upper", "Empirical lower", "average Error"),
+                    col=c("orange","green","red","blue","black"),
+                    lty=c(1,1,1,1,1)
+                );
                 lines(x*incr, non_hoeff[,5], col="blue", type = 'p');
                 lines(lowess(x*incr, non_hoeff[,5]), col="blue");
                 lines(x*incr, non_hoeff[,95], col="red", type = 'p');
@@ -184,7 +213,6 @@ q3b_main <- function(gamma, iter, main_title, fname, oname, fname2) {
         }
     }
 
-    sink(oname, append = TRUE);
 }
 
 select_case <- function(x0, line1, line2, a, b) {
