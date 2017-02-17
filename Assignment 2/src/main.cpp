@@ -3,6 +3,7 @@
 #include "classify.hpp"
 #include "rm.hpp"
 #include "perceptron.hpp"
+#include "test_error.hpp"
 #include "json.hpp"
 #include <eigen3/Eigen/Dense>
 #include <chrono>
@@ -35,26 +36,24 @@ void create_json(json &graph_data, const std::vector<double> &out1, const std::v
 
 int main() {
     //TODO: change functional and file decomposition
-    int degree = 4;
-    int repeats = 100;
-    int size = 1000;
-    int iterations = 1000;
-    int fail_size;
-    int q_min;
+    double degree = 4;
+    double degree_out;
+    double repeats = 10;
+    double size = 10000;
+    double iterations = 1000;
+    double fail_size;
+    double q_min;
     double fail_avg;
     double dist = 0.1;
     double SRM;
-    double SRM_min = 20000000000000;
-    double ERM;
-    double ERM_min = 20000000000000;
+    double SRM_min = 2;
     Eigen::MatrixXd x1;
     Eigen::MatrixXd x2;
     Eigen::MatrixXd xfeature;
     Eigen::MatrixXd y;
     Eigen::MatrixXd w;
-    Eigen::MatrixXd srm_w_min(degree+2,1);
-    Eigen::MatrixXd erm_w_min(degree+2,1);
-    Eigen::MatrixXd w_avg(degree+2,1);
+    Eigen::MatrixXd g_vec;
+    Eigen::MatrixXd srm_w_min;
     Eigen::MatrixXd H;
     Eigen::MatrixXd line;
     Eigen::MatrixXd pline;
@@ -69,47 +68,42 @@ int main() {
 
     auto start = timer::now();
 
-    for (int q = 0; q <= degree; q++) {
-        Eigen::MatrixXd w_sum(q+2,1);
+    for (int q = degree-1; q >= 3; q--) {
+        Eigen::MatrixXd g(q+2, int(repeats));
         fail_size = 0;
 
         for (int i  = 0; i < repeats; i++) {
             generate_points (x1, x2, size, 0, 2.5, -1, 2);
-            classify(x1, x2, y, color, line, pline, dist);
+            classify(x1, x2, y, color, line, dist);
             create_feature(q + 2, x1, x2, xfeature, w);
             fail_size += perceptron(size, iterations, xfeature, y, w);
-            w_sum =  w_sum + w;
-            //std::cout << i << " " << std::endl;
+            g.col(i) = w;
         }
         
-        w_avg = w_sum / repeats;    
-        std::cout << "fs: " << fail_size << std::endl;
         fail_avg = fail_size / repeats;
 
         SRM = fail_avg + RM(q+2, size, 0.2, 0.1);
-        ERM = fail_avg + RM(q+2, size, 1, 0.1);
-        std::cout << "fa: " << fail_avg << std::endl;
-        std::cout << RM(q+2, size, 0.2, 0.1);
+
         std::cout << "SRM: " << SRM << std::endl;
-        std::cout << "SRM_min: " << SRM_min << std::endl;
+        std::cout << "RM: " << RM(q+2, size, 0.2, 0.1) << std::endl;
+        std::cout << "fa: " << fail_avg << std::endl;
+        std::cout << "g: " << g << std::endl;
 
         if (SRM_min > SRM) {
-            srm_w_min = w_avg;
+            degree_out = q;
+            srm_w_min = g;
             SRM_min = SRM;
         }
-
-        if (ERM_min > ERM) {
-            erm_w_min = w_avg;
-            ERM_min = ERM;
-        }
-
         //q_w_avg.push_back(w_avg/repeats);
         //q_fail_avg.push_back(fail_size/repeats);
     }
 
+    double terror = test_error(1000000, degree_out + 2, srm_w_min);
+    std::cout << "te: " << terror << std::endl;
+
     auto finish = timer::now();
-    std::cout << (double)std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count()/1000000000<< std::endl;
-    std::cout << (double)fail_avg << std::endl;
+    std::cout << "time: " << (double)std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count()/1000000000<< std::endl;
+    std::cout << "fa: " << fail_avg << std::endl;
 
     percep_line(srm_w_min, x1, pline);
 

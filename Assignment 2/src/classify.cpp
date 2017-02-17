@@ -5,7 +5,7 @@ void function(Eigen::MatrixXd &x) {
     x = xtmp;
 }
 
-void classify(const Eigen::MatrixXd &x1, const Eigen::MatrixXd &x2, Eigen::MatrixXd &y, std::vector<char> &color, Eigen::MatrixXd &line, Eigen::MatrixXd &pline, double distortion) {
+void classify(const Eigen::MatrixXd &x1, const Eigen::MatrixXd &x2, Eigen::MatrixXd &y, std::vector<char> &color, Eigen::MatrixXd &line, double distortion) {
     typedef std::chrono::high_resolution_clock seed_clock;
     auto seed_val = seed_clock::now().time_since_epoch().count();
     Eigen::MatrixXd y1tmp(1, x1.cols());

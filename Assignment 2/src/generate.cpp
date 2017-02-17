@@ -4,13 +4,13 @@
 #include <chrono>
 
 void generate_points(Eigen::MatrixXd &x1, Eigen::MatrixXd &x2, const double& size, const double& bottom, const double& top, const double& left, const double& right) {
-    //generate_random(x1, bottom, top, size);
-    Eigen::MatrixXd tmp(1,(int)size);
-    double incr = (top - bottom)/size;
-    for (int i = 0; i < size; i++) {
-       tmp(0,i) = (i * incr);
-    }
-    x1 = tmp;
+    generate_random(x1, bottom, top, size);
+    //Eigen::MatrixXd tmp(1,(int)size);
+    //double incr = (top - bottom)/size;
+    //for (int i = 0; i < size; i++) {
+    //   tmp(0,i) = (i * incr);
+    //}
+    //x1 = tmp;
     generate_random(x2, left, right, size);
 }
 

@@ -1,6 +1,6 @@
 #include "rm.hpp"
 
-double RM(int dvc, int n, double w, double delta) {
+double RM(double dvc, double n, double w, double delta) {
     double b1 = (8 * dvc)/n;
     double b2 = log(2*n + 1);
     double b3 = 8/n;
@@ -10,6 +10,7 @@ double RM(int dvc, int n, double w, double delta) {
     double b7 = 1/(2*n);
     double b8 = 4/(w*delta);
     double b9 = b7 * log(b8);
-    return(sqrt(b9));
+    double b10 = sqrt(b9);
+    return (b10 + b6);
 }
 

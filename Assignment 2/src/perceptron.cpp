@@ -6,10 +6,10 @@
 // TODO: line vector for graph
 
 
-void create_feature(int degree, const Eigen::MatrixXd &x1, const Eigen::MatrixXd &x2, Eigen::MatrixXd &xfeature, Eigen::MatrixXd &w) {
-    Eigen::MatrixXd xfeat(degree, x1.cols());
-    Eigen::MatrixXd wtmp(degree, 1);
-    wtmp = Eigen::MatrixXd::Constant(degree, 1, 1);
+void create_feature(double degree, const Eigen::MatrixXd &x1, const Eigen::MatrixXd &x2, Eigen::MatrixXd &xfeature, Eigen::MatrixXd &w) {
+    Eigen::MatrixXd xfeat(int(degree), x1.cols());
+    Eigen::MatrixXd wtmp(int(degree), 1);
+    wtmp = Eigen::MatrixXd::Constant(int(degree), 1, 0.5);
 
     xfeat.row(0).array() = 1;
     for (int i = 1; i < degree - 1; i++) {
@@ -39,19 +39,25 @@ void percep_line(const Eigen::MatrixXd &w, const Eigen::MatrixXd &x, Eigen::Matr
     line_vals = tmp_line_vals;
 }
 
-int perceptron(int size, int iterations, const Eigen::MatrixXd &x, const Eigen::MatrixXd &y, Eigen::MatrixXd &w) {
-    Eigen::MatrixXd H(1, size);
-    Eigen::MatrixXd fail(1, size);
+double perceptron(double size, double iterations, const Eigen::MatrixXd &x, const Eigen::MatrixXd &y, Eigen::MatrixXd &w) {
+    Eigen::MatrixXd H(1, int(size));
+    Eigen::MatrixXd fail(1, int(size));
+    Eigen::MatrixXd min_w(w.rows(), w.cols());
     Eigen::MatrixXd::Index failRow, failCol;
-    int fail_size;
-    float min_val;
+    double fail_size;
+    double min_fail = 2;
 
     for (int i = 0; i < iterations; i++){
         H = w.transpose() * x;
         H = H.unaryExpr(std::ptr_fun(sign));
 
         fail = H.array() * y.array();
-        fail_size = (fail.array() < 0).count();
+        fail_size = ((fail.array() < 0).count())/size;
+
+        if (fail_size < min_fail) {
+            min_w = w;
+            min_fail = fail_size;
+        }
 
         if (fail_size == 0) {
             return(fail_size);
@@ -59,7 +65,7 @@ int perceptron(int size, int iterations, const Eigen::MatrixXd &x, const Eigen::
 
         fail.array().minCoeff(&failRow, &failCol);
         w = w + y(0, failCol) * x.col(failCol);
-
     }
-    return(fail_size);
+    w = min_w;
+    return(min_fail);
 }
