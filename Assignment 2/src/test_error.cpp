@@ -22,10 +22,10 @@ double test_error(double size, double degree, const Eigen::MatrixXd &w) {
     Eigen::MatrixXd x2;
     Eigen::MatrixXd xfeature;
     Eigen::MatrixXd y;
-    std::vector<char> color;
     Eigen::MatrixXd line;
-    double dist;
     Eigen::MatrixXd dummy;
+    std::vector<char> color;
+    double dist = 0.1;
     generate_points(x1, x2, size, 0, 2.5, -1, 2);
     classify(x1, x2, y, color, line, dist);
     create_feature(degree, x1, x2, xfeature, dummy);

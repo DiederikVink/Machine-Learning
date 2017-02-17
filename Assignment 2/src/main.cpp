@@ -40,7 +40,7 @@ int main() {
     double degree_out;
     double repeats = 10;
     double size = 10000;
-    double iterations = 1000;
+    double iterations = 10000;
     double fail_size;
     double q_min;
     double fail_avg;
@@ -78,6 +78,7 @@ int main() {
             create_feature(q + 2, x1, x2, xfeature, w);
             fail_size += perceptron(size, iterations, xfeature, y, w);
             g.col(i) = w;
+            std::cout << "----------" << i << "----------" << std::endl;
         }
         
         fail_avg = fail_size / repeats;
@@ -105,14 +106,14 @@ int main() {
     std::cout << "time: " << (double)std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count()/1000000000<< std::endl;
     std::cout << "fa: " << fail_avg << std::endl;
 
-    percep_line(srm_w_min, x1, pline);
+    //percep_line(srm_w_min, x1, pline);
 
-    out1.assign(x1.data(), x1.data()+x1.size());
-    out2.assign(x2.data(), x2.data()+x2.size());
-    outline.assign(line.data(), line.data()+line.size());
-    outpline.assign(pline.data(), pline.data()+pline.size());
-    json graph_data;
-    create_json(graph_data, out1, out2, outline, outpline, color, "title", "xlab", "ylab", "legend", "files/graphs.json");
+    //out1.assign(x1.data(), x1.data()+x1.size());
+    //out2.assign(x2.data(), x2.data()+x2.size());
+    //outline.assign(line.data(), line.data()+line.size());
+    //outpline.assign(pline.data(), pline.data()+pline.size());
+    //json graph_data;
+    //create_json(graph_data, out1, out2, outline, outpline, color, "title", "xlab", "ylab", "legend", "files/graphs.json");
     return 0;
 }
 

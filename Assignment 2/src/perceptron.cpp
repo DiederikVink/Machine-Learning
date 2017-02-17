@@ -32,7 +32,6 @@ double sign(const double &x) {
 void percep_line(const Eigen::MatrixXd &w, const Eigen::MatrixXd &x, Eigen::MatrixXd &line_vals) {
     Eigen::MatrixXd tmp_line_vals(1, x.cols());
     tmp_line_vals.row(0).array() = -w(0)/w(w.rows()-1);
-    std::cout << "w:\n" << w << std::endl;
     for(int i = 1; i < w.rows()-1; i++){
         tmp_line_vals = tmp_line_vals.array() - (w(i)/w(w.rows()-1) * x.array().pow(i));
     }
