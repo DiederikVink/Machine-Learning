@@ -1,5 +1,5 @@
 #include <iostream>
-#include "generate.h"
+#include "generate.hpp"
 #include "classify.hpp"
 #include "rm.hpp"
 #include "perceptron.hpp"
@@ -7,6 +7,7 @@
 #include "json.hpp"
 #include <eigen3/Eigen/Dense>
 #include <chrono>
+#include <cmath>
 #include <vector>
 #include <fstream>
 
@@ -47,6 +48,8 @@ int main() {
     double dist = 0.1;
     double SRM;
     double SRM_min = 2;
+    double weight;
+    double delta;
     Eigen::MatrixXd x1;
     Eigen::MatrixXd x2;
     Eigen::MatrixXd xfeature;
@@ -68,26 +71,37 @@ int main() {
 
     auto start = timer::now();
 
-    for (int q = degree-1; q >= 3; q--) {
+    std::cout << "Setup" << std::endl;
+    std::cout << "Sample size (n): " << size << std::endl;
+    std::cout << "Perceptron iteration limit: " << iterations << std::endl;
+    std::cout << "Overall repetitions (to acquire set for an average): " << repeats << std::endl;
+
+    for (int q = degree; q >= 0; q--) {
         Eigen::MatrixXd g(q+2, int(repeats));
         fail_size = 0;
 
+        std::cout << "----------------Q = " << q << "----------------" << std::endl;
+
         for (int i  = 0; i < repeats; i++) {
-            generate_points (x1, x2, size, 0, 2.5, -1, 2);
-            classify(x1, x2, y, color, line, dist);
+            generate_points (x1, x2, y, size, 0, 2.5, -1, 2, dist);
             create_feature(q + 2, x1, x2, xfeature, w);
             fail_size += perceptron(size, iterations, xfeature, y, w);
             g.col(i) = w;
-            std::cout << "----------" << i << "----------" << std::endl;
+            std::cout << "Repetition: " << i << std::endl;
         }
         
         fail_avg = fail_size / repeats;
 
-        SRM = fail_avg + RM(q+2, size, 0.2, 0.1);
+        //weight = std::abs(1.1 - double(q)/3.0);
+        weight = 0.2;
+        delta = 0.1/weight;
+        std::cout << "weight: " << weight << std::endl;
+
+        SRM = fail_avg + (0.01 * RM(q+2, size, weight, delta));
 
         std::cout << "SRM: " << SRM << std::endl;
-        std::cout << "RM: " << RM(q+2, size, 0.2, 0.1) << std::endl;
-        std::cout << "fa: " << fail_avg << std::endl;
+        std::cout << "Complexity Term: " << RM(q+2, size, weight, delta) << std::endl;
+        std::cout << "Training Error: " << fail_avg << std::endl;
         std::cout << "g: " << g << std::endl;
 
         if (SRM_min > SRM) {
@@ -95,16 +109,18 @@ int main() {
             srm_w_min = g;
             SRM_min = SRM;
         }
-        //q_w_avg.push_back(w_avg/repeats);
-        //q_fail_avg.push_back(fail_size/repeats);
     }
 
-    double terror = test_error(1000000, degree_out + 2, srm_w_min);
-    std::cout << "te: " << terror << std::endl;
+    std::cout << "----------------Final Results----------------" << std::endl;
+    std::cout << "Training Error: " << fail_avg << std::endl;
+    std::cout << "SRM bound: " << SRM_min << std::endl;
+    std::cout << "SRM polynomial degree: " << degree_out << std::endl;
+    std::cout << "Final SRM (g): " << srm_w_min << std::endl;
+    double terror = test_error(10000000, degree_out + 2, dist, srm_w_min);
+    std::cout << "Test Error: " << terror << std::endl;
 
     auto finish = timer::now();
-    std::cout << "time: " << (double)std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count()/1000000000<< std::endl;
-    std::cout << "fa: " << fail_avg << std::endl;
+    std::cout << "Run Time: " << (double)std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count()/1000000000<< std::endl;
 
     //percep_line(srm_w_min, x1, pline);
 
