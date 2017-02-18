@@ -19,7 +19,7 @@ objects/test_error.o : src/test_error.cpp src/perceptron.hpp src/classify.hpp sr
 	@g++ -std=c++11 -c src/test_error.cpp -o objects/test_error.o
 
 objects/rm.o : src/rm.cpp src/rm.hpp
-	@g++ -std=c++11 -c src/rm.cpp -o objects/rm.o
+	@g++ -std=c++11 -I externals/ -c src/rm.cpp -o objects/rm.o
 
 clean:
 	@rm -f objects/*.o bin/assignment2 src/*.swp
