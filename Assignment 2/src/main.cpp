@@ -48,7 +48,6 @@ int main() {
     double dist = 0.1;
     double SRM;
     double SRM_min = 2;
-    double weight;
     double delta;
     Eigen::MatrixXd x1;
     Eigen::MatrixXd x2;
@@ -67,6 +66,7 @@ int main() {
     std::vector<double> outpline;
     std::vector<double> q_w_avg;
     std::vector<double> q_fail_avg;
+    std::vector<double> weight;
     std::vector<char> color;
     typedef std::chrono::high_resolution_clock timer;
 
@@ -76,6 +76,12 @@ int main() {
     std::cout << "Sample size (n): " << size << std::endl;
     std::cout << "Perceptron iteration limit: " << iterations << std::endl;
     std::cout << "Overall repetitions (to acquire set for an average): " << repeats << std::endl;
+
+    weight.push_back(0.03);
+    weight.push_back(0.07);
+    weight.push_back(0.1);
+    weight.push_back(0.3);
+    weight.push_back(0.5);
 
     for (int q = degree; q >= 0; q--) {
         Eigen::MatrixXd g(q+2, int(repeats));
@@ -93,18 +99,17 @@ int main() {
         fail_avg = fail_size / repeats;
 
         //weight = std::abs(1.1 - double(q)/3.0);
-        weight = 0.2;
-        delta = 0.1/weight;
-        std::cout << "weight: " << weight << std::endl;
+        delta = 0.1/weight[q];
+        std::cout << "weight: " << weight[q] << std::endl;
 
-        SRM = fail_avg + (0.01 * RM(q+2, size, weight, delta));
+        SRM = fail_avg + (0.01 * RM(q+2, size, weight[q], delta));
 
         std::cout << "SRM: " << SRM << std::endl;
-        std::cout << "Complexity Term: " << RM(q+2, size, weight, delta) << std::endl;
+        std::cout << "Complexity Term: " << RM(q+2, size, weight[q], delta) << std::endl;
         std::cout << "Training Error: " << fail_avg << std::endl;
         std::cout << "g: " << g << std::endl;
 
-        std::cout << "ERM Test Error (" << q << "): " << test_error(10000000, q+2, dist, g) << std::endl;
+        //std::cout << "ERM Test Error (" << q << "): " << test_error(10000000, q+2, dist, g) << std::endl;
 
         if (SRM_min > SRM) {
             degree_out = q;
