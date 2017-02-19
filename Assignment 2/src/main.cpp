@@ -41,7 +41,7 @@ int main() {
     double degree_out;
     double repeats = 10;
     double size = 10000;
-    double iterations = 10000;
+    double iterations = 100;
     double fail_size;
     double q_min;
     double fail_avg;
@@ -57,6 +57,7 @@ int main() {
     Eigen::MatrixXd w;
     Eigen::MatrixXd g_vec;
     Eigen::MatrixXd srm_w_min;
+    Eigen::MatrixXd erm_total;
     Eigen::MatrixXd H;
     Eigen::MatrixXd line;
     Eigen::MatrixXd pline;
@@ -87,7 +88,6 @@ int main() {
             create_feature(q + 2, x1, x2, xfeature, w);
             fail_size += perceptron(size, iterations, xfeature, y, w);
             g.col(i) = w;
-            std::cout << "Repetition: " << i << std::endl;
         }
         
         fail_avg = fail_size / repeats;
@@ -104,6 +104,8 @@ int main() {
         std::cout << "Training Error: " << fail_avg << std::endl;
         std::cout << "g: " << g << std::endl;
 
+        std::cout << "ERM Test Error (" << q << "): " << test_error(10000000, q+2, dist, g) << std::endl;
+
         if (SRM_min > SRM) {
             degree_out = q;
             srm_w_min = g;
@@ -118,7 +120,7 @@ int main() {
     std::cout << "Final SRM (g): " << srm_w_min << std::endl;
     double terror = test_error(10000000, degree_out + 2, dist, srm_w_min);
     std::cout << "Test Error: " << terror << std::endl;
-
+    
     auto finish = timer::now();
     std::cout << "Run Time: " << (double)std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count()/1000000000<< std::endl;
 
