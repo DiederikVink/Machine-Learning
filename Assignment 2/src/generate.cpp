@@ -1,6 +1,7 @@
 #include "generate.hpp"
 #include <eigen3/Eigen/Dense>
 #include <random>
+#include <iostream>
 #include <chrono>
 
 typedef std::chrono::high_resolution_clock seed_clock;
@@ -9,7 +10,7 @@ bool function(const double& x1, const double& x2) {
     return(x2 > x1*(x1 - 1)*(x1 - 2));
 }
 
-void generate_points(Eigen::MatrixXd &x1, Eigen::MatrixXd &x2, Eigen::MatrixXd &y, const double& size, const double& bottom, const double& top, const double& left, const double& right, const double& distortion) {
+void generate_points(Eigen::MatrixXd &x1, Eigen::MatrixXd &x2, Eigen::MatrixXd &y, const double& size, const double& bottom, const double& top, const double& left, const double& right, const double& distortion, std::vector<char>& color) {
 
     Eigen::MatrixXd x1tmp(1, (int)size);
     Eigen::MatrixXd x2tmp(1, (int)size);
@@ -33,13 +34,21 @@ void generate_points(Eigen::MatrixXd &x1, Eigen::MatrixXd &x2, Eigen::MatrixXd &
 
         if(function(x1tmp(0, i), x2tmp(0, i))) {
             ytmp(0, i) = 1;
+            color.push_back('b');
         }
         else {
             ytmp(0, i) = -1; 
+            color.push_back('r');
         }
         randval = ydist(gen_eng);
         if(randval < distortion)  {
             ytmp(0, i) = ytmp(0, i) * -1;
+            if(color[i] == 'b') {
+                color[i] = 'r';
+            }
+            else {
+                color[i] = 'b';
+            }
         }
 
         gen_eng.seed(ydist(gen_eng) * seed_val);

@@ -9,9 +9,6 @@ import json
 with open('files/graphs.json') as graph_file:    
     data = json.load(graph_file)
 
-#ax1.set_title(data["title"])
-#ax1.set_xlabel(data["xlabel"])
-#ax1.set_ylabel(data["ylabel"])
 plt.figure()
 plt.title(data["title"])
 plt.ylabel(data["ylabel"])
@@ -19,10 +16,17 @@ plt.xlabel(data["xlabel"])
 
 x = data["x"]
 y = data["y"]
+col = []
 
-#plt.scatter(x, data["y"], c=data["col"], label=data["legend"])
-plt.scatter(x, data["line"], s=1, c='r')
-plt.scatter(x, data["pline"], c='b')
+for i in data["col"]:
+    if (i == 98):
+        col.append('b')
+    else:
+        col.append('r')
+
+plt.scatter(x, data["y"], s=1, color=col, label=data["legend"])
+plt.scatter(x, data["line"], s=1, color='green')
+plt.scatter(x, data["pline"], s=1, color='cyan')
 
 plt.legend()
 plt.show()

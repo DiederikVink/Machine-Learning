@@ -2,6 +2,7 @@
 
 run: bin/assignment2
 	@./bin/assignment2
+	python ./src/graph.py
 
 bin/assignment2: objects/generate.o objects/main.o objects/perceptron.o objects/rm.o objects/test_error.o
 	@g++ -o bin/assignment2 objects/generate.o objects/main.o objects/perceptron.o objects/rm.o objects/test_error.o

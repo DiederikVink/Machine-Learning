@@ -21,7 +21,7 @@ double test_error(const double& size, const double& degree, const double& dist, 
     Eigen::MatrixXd line;
     Eigen::MatrixXd dummy;
     std::vector<char> color;
-    generate_points(x1, x2, y, size, 0, 2.5, -1, 2, dist);
+    generate_points(x1, x2, y, size, 0, 2.5, -1, 2, dist, color);
     create_feature(degree, x1, x2, xfeature, dummy);
     return(test(size, xfeature, w, y));
  }
