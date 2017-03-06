@@ -61,6 +61,16 @@ def unnormalize(dataMatrix):
     return tmp + mean
 
 def transform(dataMatrix):
-    ones = np.ones((1, dataMatrix.shape[1]))
-    lMatrix =  np.polynomial.legendre.legval(datmat, ones)
-    print lMatrix
+    
+
+def calc_H(lamda, Z):
+    ZT = np.transpose(Z)
+    ZTZ = np.dot(ZT,Z)
+
+    LI = np.zeros((ZTZ.shape[0],ZTZ.shape[1]))
+    np.fill_diagonal(LI, lamda)
+    
+    ZTZLI = ZTZ + LI
+    ZTZLI_1 = np.linalg.inv(ZTZLI)
+    ZTZLI_1ZT = np.dot(ZTZLI_1,ZT)
+    return np.dot(Z,ZTZLI_1ZT)

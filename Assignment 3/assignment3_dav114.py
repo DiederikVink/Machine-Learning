@@ -14,8 +14,8 @@ def main():
     movFeat = dh.read_data('./movie-data/movie-features.csv')
 
     #q3a(trainData, testData)
-    q3b(movFeat, trainData, testData)    
-    #q3c(movFeat, trainData, testData)
+    #q3b(movFeat, trainData, testData)    
+    q3c(movFeat, trainData, testData)
 
 
 def q3a(trainData,testData):

@@ -8,19 +8,19 @@ def linear_reg(dataMatrix, V, testMatrix):
     bounds = dh.extract(trainPerson, 0)
     Z = V
     minim = 0.0
-    maxim = 10.0
-    step = maxim/2.0
+    maxim = 1.0
+    step = maxim/20
     lamda = list(np.arange(minim+step,maxim+step,step))
     uLamda = cross_validation(Z, lamda, bounds, dataMatrix)
     rRegW = regression(Z, uLamda, bounds, trainPerson)
-    #testLinReg = testing.lin_reg_test(rRegW, Z, testMatrix, 0, 1, 2)
-    #return testLinReg
+    testLinReg = testing.lin_reg_test(rRegW, Z, testMatrix, 0, 1, 2)
+    return testLinReg
 
 def regression(V, lamda, bounds, dataMatrix):
     prevBound = 0
     rRegW = np.zeros((V.shape[1],1))
     minErr = 10000
-    j = 0
+    i = 0
     for bound in bounds:
         Z = np.zeros((1,V.shape[1]))
         y = np.array([dataMatrix[prevBound:bound+1, 2]]).T
@@ -32,7 +32,8 @@ def regression(V, lamda, bounds, dataMatrix):
             Z = np.append(Z, [V[val-1,:]], axis=0)
         Z = np.delete(Z, (0), axis=0)
        
-        rRegW = np.append(rRegW, ridge_reg(Z, y, lamda), axis=1)
+        rRegW = np.append(rRegW, ridge_reg(Z, y, lamda[i]), axis=1)
+        i += 1
     rRegW = np.delete(rRegW, (0), axis = 1)
     return rRegW 
     
@@ -50,25 +51,48 @@ def cross_validation(V, lamda, bounds, dataMatrix):
             Z = np.append(Z, [V[val-1,:]], axis=0)
         Z = np.delete(Z, (0), axis=0)
         
-        totalError = 0
-        minError = 10000
-        for lam in lamda:
-            i = 0
-            for row in Z:
-                Ztmp = np.delete(Z, (i), axis = 0)
-                ytmp = np.delete(y, (i), axis = 0)
-                wtmp = ridge_reg(Ztmp, ytmp, lam)
-                err = testing.cross_val_test(wtmp, row, y[i])
-                totalError += err
-                i += 1
-            avgError = totalError / Z.shape[0]
-            if (avgError <= minError):
-                minError = avgError
-                minLamda = lam
+        #userLamdaE = empirical_cv_error(Z, lamda, y)
+        minLamda = analytic_cv_error(Z, lamda, y)
         userLamda = np.append(userLamda, [[minLamda]], axis=0)
+
     userLamda = np.delete(userLamda, (0), axis=0)
     return userLamda
 
+def empirical_cv_error(Z, lamda, y):
+    totalError = 0
+    minError = 10000
+    for lam in lamda:
+        i = 0
+        totalError = 0
+        for row in Z:
+            Ztmp = np.delete(Z, (i), axis = 0)
+            ytmp = np.delete(y, (i), axis = 0)
+            wtmp = ridge_reg(Ztmp, ytmp, lam)
+            err = testing.cross_val_test(wtmp, row, y[i])
+            totalError += err
+            i += 1
+        avgError = totalError / Z.shape[0]
+        if (avgError <= minError):
+            minError = avgError
+            minLamda = lam
+    return minLamda
+
+def analytic_cv_error(Z, lamda, y):
+    minError = 100000
+    minLamda = 0
+    for lam in lamda:
+        H = dh.calc_H(lam, Z)
+        yHat = np.dot(H,y)
+        denom = 1 - H
+        numer = yHat - y
+        div = numer/denom
+        divsq = np.square(div)
+        sumdiv = np.sum(divsq)
+        res = sumdiv/(Z.shape[1])
+        if (res <= minError):
+            minError = res
+            minLamda = lam
+    return minLamda
 
 def ridge_reg(Z, y, lamda):
     ZT = np.transpose(Z)
