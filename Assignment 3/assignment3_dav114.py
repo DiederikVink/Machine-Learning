@@ -14,8 +14,8 @@ def main():
     movFeat = dh.read_data('./movie-data/movie-features.csv')
 
     #q3a(trainData, testData)
-    q3b(movFeat, trainData, testData)    
-    #q3c(movFeat, trainData, testData)
+    #q3b(movFeat, trainData, testData)    
+    q3c(movFeat, trainData, testData)
 
 
 def q3a(trainData,testData):
@@ -37,6 +37,7 @@ def q3b(movFeat, trainData, testData):
 def q3c(movFeat, trainData, testData):
 
     V = np.delete(movFeat, (0), axis=1)
+    V = dh.legendre_transform(V, 3)
     print lr.linear_reg(trainData, V, testData)
 
 if __name__ == "__main__":

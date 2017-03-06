@@ -1,5 +1,7 @@
 import csv
+import scipy
 import numpy as np
+from sklearn import decomposition
 
 def read_data(fileName):
     dataMatrix = np.loadtxt(open(fileName, "rb"), delimiter=",", skiprows=1)
@@ -72,5 +74,22 @@ def calc_H(lamda, Z):
     ZTZLI_1ZT = np.dot(ZTZLI_1,ZT)
     return np.dot(Z,ZTZLI_1ZT)
 
-def transform(dataMatrix):
-    return 0
+def regular_transform(dataMatrix, n):
+    trans = dataMatrix
+    for degree in xrange(2,n+1):
+        trans = np.append(trans, np.power(dataMatrix, n), axis=1)
+    return trans
+
+def pca_transform(dataMatrix, n):
+    PCA = decomposition.PCA(n_components=n)
+    trans = PCA.fit_transform(dataMatrix)
+    return trans
+
+def legendre_transform(dataMatrix, n):
+    trans = np.zeros((dataMatrix.shape[0], 1))
+    for degree in xrange(0,n+1):
+        transLeg = np.polyval(scipy.special.legendre(degree),dataMatrix)
+        trans = np.append(trans, transLeg, axis = 1)
+
+    trans = np.delete(trans, (0), axis = 1)
+    return trans

@@ -4,21 +4,31 @@ from sklearn import preprocessing
 import testing
 import time
 
-def linear_reg(dataMatrix, V, testMatrix):
+def linear_reg(dataMatrix, V, testMatrix, legen):
     trainPerson = dh.sort(dataMatrix, 0)
     bounds = dh.extract(trainPerson, 0)
+
+    if (legen == 0):
+        Z = V
+        lamda = gen_lamda()
+        uLamda = lamda_cv(Z, lamda, bounds, dataMatrix)
+        (rRegW, ymean) = regression(Z, uLamda, bounds, trainPerson)
+        V = preprocessing.scale(Z)
+        testLinReg = testing.lin_reg_test(rRegW, V, testMatrix, ymean, 0, 1, 2)
+        return testLinReg
+    elif (legen == 1):
+        legendre_cv(  )
+        return 1
+    else:
+        return 0
+
+def gen_lamda():
     minim = 0.0
     maxim = 10000.0
-    step = (maxim-minim)/2000
-    Z = V
+    step = (maxim-minim)/100
     lamda = list(np.arange(minim+step,maxim+step,step))
-    uLamda = cross_validation(Z, lamda, bounds, dataMatrix)
-    print uLamda
-    (rRegW, ymean) = regression(Z, uLamda, bounds, trainPerson)
+    return lamda
 
-    V = preprocessing.scale(Z)
-    testLinReg = testing.lin_reg_test(rRegW, V, testMatrix, ymean, 0, 1, 2)
-    return testLinReg
 
 def regression(V, lamda, bounds, dataMatrix):
     prevBound = 0
@@ -47,8 +57,18 @@ def regression(V, lamda, bounds, dataMatrix):
     ymean = np.delete(ymean, (0), axis=1)
     rRegW = np.delete(rRegW, (0), axis = 1)
     return (rRegW, ymean)
+
+def legendre_cv(V, lamda, bounds, dataMatrix, n):
+
+    for degree in xrange(2, n+1):
+        Z = dh.legendre_transform(V, degree)
+        #lamda = gen_lamda()
+        #uLamda = lamda_cv(Z, lamda, bounds, dataMatrix)
+
+
+
     
-def cross_validation(V, lamda, bounds, dataMatrix):
+def lamda_cv(V, lamda, bounds, dataMatrix):
     prevBound = 0
     rRegW = np.zeros((V.shape[1],1))
     userLamda = np.zeros((1, 1))
