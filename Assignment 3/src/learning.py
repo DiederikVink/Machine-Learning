@@ -11,21 +11,26 @@ def linear_reg(dataMatrix, V, testMatrix, legen):
     if (legen == 0):
         Z = V
         lamda = gen_lamda()
-        uLamda = lamda_cv(Z, lamda, bounds, dataMatrix)
+        (uLamda, uError) = lamda_cv(Z, lamda, bounds, dataMatrix)
         (rRegW, ymean) = regression(Z, uLamda, bounds, trainPerson)
         V = preprocessing.scale(Z)
         testLinReg = testing.lin_reg_test(rRegW, V, testMatrix, ymean, 0, 1, 2)
         return testLinReg
     elif (legen == 1):
-        legendre_cv(  )
-        return 1
+        (bestLegen, uLamda) = legendre_cv(V, bounds, dataMatrix, 4)
+        Z = dh.legendre_transform(V, bestLegen)
+        (rRegW, ymean) = regression(Z, uLamda, bounds, trainPerson)
+        V = preprocessing.scale(Z)
+        testLinReg = testing.lin_reg_test(rRegW, V, testMatrix, ymean, 0, 1, 2)
+        trainLinReg = testing.lin_reg_test(rRegW, V, dataMatrix, ymean, 0, 1, 2)
+        return bestLegen, testLinReg, trainLinReg
     else:
         return 0
 
 def gen_lamda():
     minim = 0.0
     maxim = 10000.0
-    step = (maxim-minim)/100
+    step = (maxim-minim)/10
     lamda = list(np.arange(minim+step,maxim+step,step))
     return lamda
 
@@ -58,16 +63,39 @@ def regression(V, lamda, bounds, dataMatrix):
     rRegW = np.delete(rRegW, (0), axis = 1)
     return (rRegW, ymean)
 
-def legendre_cv(V, lamda, bounds, dataMatrix, n):
-
+def legendre_cv(V, bounds, dataMatrix, n):
+    legList = np.zeros((n-1, len(bounds)))
+    allLamda = np.zeros((len(bounds),1))
     for degree in xrange(2, n+1):
-        Z = dh.legendre_transform(V, degree)
-        #lamda = gen_lamda()
-        #uLamda = lamda_cv(Z, lamda, bounds, dataMatrix)
+        ECV = np.zeros(len(bounds))
+        Vtrans = dh.legendre_transform(V, degree)
+        lamda = gen_lamda()
+        uLamda = lamda_cv(Vtrans, lamda, bounds, dataMatrix)
+        allLamda = np.append(allLamda, uLamda, axis = 1)
+
+        prevBound = 0
+        i = 0
+        for bound in bounds:
+            Z = np.zeros((1,Vtrans.shape[1]))
+            y = np.array([dataMatrix[prevBound:bound+1, 2]]).T
+            tmp = dataMatrix[prevBound:bound+1, 1]
+            prevBound = bound+1
+            for val in tmp:
+                Z = np.append(Z, [Vtrans[int(val-1),:]], axis=0)
+            Z = np.delete(Z, (0), axis=0)
+
+            Znorm = preprocessing.scale(Z)
+            ycent = y - np.mean(y)
+
+            (uLam, ECV[i]) = analytic_cv_error(Znorm, uLamda[i], ycent)
+            i += 1
+        legList[degree-2] = ECV
+    allLamda = np.delete(allLamda, (0), axis = 1)
+    minList = np.argmin(legList, axis=0)
+    count = np.argmax(np.bincount(minList))
+    return (count+2, allLamda[:,count])
 
 
-
-    
 def lamda_cv(V, lamda, bounds, dataMatrix):
     prevBound = 0
     rRegW = np.zeros((V.shape[1],1))
@@ -85,7 +113,7 @@ def lamda_cv(V, lamda, bounds, dataMatrix):
         Znorm = preprocessing.scale(Z)
         ycent = y - np.mean(y)
 
-        minLamda = analytic_cv_error(Znorm, lamda, ycent)
+        (minLamda, minError) = analytic_cv_error(Znorm, lamda, ycent)
         userLamda = np.append(userLamda, [[minLamda]], axis=0)
 
     userLamda = np.delete(userLamda, (0), axis=0)
@@ -126,7 +154,7 @@ def analytic_cv_error(Z, lamda, y):
         if (res <= minError):
             minError = res
             minLamda = lam
-    return minLamda
+    return (minLamda, minError)
 
 def ridge_reg(Z, y, lamda):
     ZT = np.transpose(Z)

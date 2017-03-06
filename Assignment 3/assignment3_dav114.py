@@ -32,13 +32,12 @@ def q3a(trainData,testData):
 def q3b(movFeat, trainData, testData):
 
     V = np.delete(movFeat, (0), axis=1)
-    print lr.linear_reg(trainData, V, testData)
+    print lr.linear_reg(trainData, V, testData, 0)
 
 def q3c(movFeat, trainData, testData):
 
     V = np.delete(movFeat, (0), axis=1)
-    V = dh.legendre_transform(V, 3)
-    print lr.linear_reg(trainData, V, testData)
+    print lr.linear_reg(trainData, V, testData, 1)
 
 if __name__ == "__main__":
     main()
