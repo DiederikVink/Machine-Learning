@@ -1,19 +1,23 @@
 import numpy as np
 import data_handler as dh
+from sklearn import preprocessing
 import testing
 import time
 
 def linear_reg(dataMatrix, V, testMatrix):
     trainPerson = dh.sort(dataMatrix, 0)
     bounds = dh.extract(trainPerson, 0)
-    Z = V
     minim = 0.0
-    maxim = 1.0
-    step = maxim/20
+    maxim = 10000.0
+    step = (maxim-minim)/2000
+    Z = V
     lamda = list(np.arange(minim+step,maxim+step,step))
     uLamda = cross_validation(Z, lamda, bounds, dataMatrix)
-    rRegW = regression(Z, uLamda, bounds, trainPerson)
-    testLinReg = testing.lin_reg_test(rRegW, Z, testMatrix, 0, 1, 2)
+    print uLamda
+    (rRegW, ymean) = regression(Z, uLamda, bounds, trainPerson)
+
+    V = preprocessing.scale(Z)
+    testLinReg = testing.lin_reg_test(rRegW, V, testMatrix, ymean, 0, 1, 2)
     return testLinReg
 
 def regression(V, lamda, bounds, dataMatrix):
@@ -21,6 +25,7 @@ def regression(V, lamda, bounds, dataMatrix):
     rRegW = np.zeros((V.shape[1],1))
     minErr = 10000
     i = 0
+    ymean = np.zeros((1,1))
     for bound in bounds:
         Z = np.zeros((1,V.shape[1]))
         y = np.array([dataMatrix[prevBound:bound+1, 2]]).T
@@ -29,13 +34,19 @@ def regression(V, lamda, bounds, dataMatrix):
         prevBound = bound+1
 
         for val in tmp:
-            Z = np.append(Z, [V[val-1,:]], axis=0)
+            Z = np.append(Z, [V[int(val-1),:]], axis=0)
         Z = np.delete(Z, (0), axis=0)
        
-        rRegW = np.append(rRegW, ridge_reg(Z, y, lamda[i]), axis=1)
+        Znorm = preprocessing.scale(Z)
+        yAvg = np.mean(y, axis = 0)
+        ycent = y - yAvg
+        ymean = np.append(ymean, [yAvg], axis=1)
+
+        rRegW = np.append(rRegW, ridge_reg(Znorm, ycent, lamda[i]), axis=1)
         i += 1
+    ymean = np.delete(ymean, (0), axis=1)
     rRegW = np.delete(rRegW, (0), axis = 1)
-    return rRegW 
+    return (rRegW, ymean)
     
 def cross_validation(V, lamda, bounds, dataMatrix):
     prevBound = 0
@@ -48,11 +59,13 @@ def cross_validation(V, lamda, bounds, dataMatrix):
         prevBound = bound+1
 
         for val in tmp:
-            Z = np.append(Z, [V[val-1,:]], axis=0)
+            Z = np.append(Z, [V[int(val-1),:]], axis=0)
         Z = np.delete(Z, (0), axis=0)
-        
-        #userLamdaE = empirical_cv_error(Z, lamda, y)
-        minLamda = analytic_cv_error(Z, lamda, y)
+
+        Znorm = preprocessing.scale(Z)
+        ycent = y - np.mean(y)
+
+        minLamda = analytic_cv_error(Znorm, lamda, ycent)
         userLamda = np.append(userLamda, [[minLamda]], axis=0)
 
     userLamda = np.delete(userLamda, (0), axis=0)
@@ -83,12 +96,13 @@ def analytic_cv_error(Z, lamda, y):
     for lam in lamda:
         H = dh.calc_H(lam, Z)
         yHat = np.dot(H,y)
-        denom = 1 - H
+        HDiag = np.array([H.diagonal()]).T
+        denom = 1 - HDiag
         numer = yHat - y
         div = numer/denom
         divsq = np.square(div)
         sumdiv = np.sum(divsq)
-        res = sumdiv/(Z.shape[1])
+        res = sumdiv/(Z.shape[0])
         if (res <= minError):
             minError = res
             minLamda = lam

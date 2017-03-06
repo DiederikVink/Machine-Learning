@@ -60,9 +60,6 @@ def unnormalize(dataMatrix):
     tmp = dataMatrix * stdev
     return tmp + mean
 
-def transform(dataMatrix):
-    
-
 def calc_H(lamda, Z):
     ZT = np.transpose(Z)
     ZTZ = np.dot(ZT,Z)
@@ -74,3 +71,6 @@ def calc_H(lamda, Z):
     ZTZLI_1 = np.linalg.inv(ZTZLI)
     ZTZLI_1ZT = np.dot(ZTZLI_1,ZT)
     return np.dot(Z,ZTZLI_1ZT)
+
+def transform(dataMatrix):
+    return 0

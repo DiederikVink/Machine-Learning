@@ -6,11 +6,14 @@ def mean_test(dataMatrix, meanMatrix, index, data):
     err = np.sum(errSquare)
     return err/dataMatrix.shape[0]
 
-def lin_reg_test(w, v, r, user, movie, rating):
-    rHat = np.dot(np.transpose(w), np.transpose(v))
-    errList = [row[rating] - rHat[row[user]-1][row[movie]-1] for row in r]
+def lin_reg_test(w, v, r, ymean, user, movie, rating):
+    rHat = np.dot(v, w)
+    rHat = rHat + ymean
+
+    errList = [row[rating] - rHat[int(row[movie]-1)][int(row[user]-1)] for row in r]
     errSquare = np.square(errList)
     err = np.sum(errSquare)
+
     return err/r.shape[0]
 
 def cross_val_test(w, z, r):
