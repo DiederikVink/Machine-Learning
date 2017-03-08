@@ -16,6 +16,7 @@ def main():
     #q3a(trainData, testData)
     #q3b(movFeat, trainData, testData)    
     q3c(movFeat, trainData, testData)
+    #q3d(movFeat, trainData, testData)
 
 
 def q3a(trainData,testData):
@@ -37,7 +38,14 @@ def q3b(movFeat, trainData, testData):
 def q3c(movFeat, trainData, testData):
 
     V = np.delete(movFeat, (0), axis=1)
-    print lr.linear_reg(trainData, V, testData, 1)
+    V = dh.pca_transform(V, 3)
+    print lr.linear_reg(trainData, V, testData, 2)
+
+def q3d(movFeat, trainData, testData):
+
+    lamdaList = [0.5, 0.25, 0.125, 0.0625]
+    #lamda = lr.fold_cv_error(trainData, lamdaList, 10000)
+    print lr.collab_filter(trainData, testData, 5, 0.001, 0.1, 100)
 
 if __name__ == "__main__":
     main()

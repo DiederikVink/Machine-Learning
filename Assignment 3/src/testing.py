@@ -18,3 +18,15 @@ def lin_reg_test(w, v, r, ymean, user, movie, rating):
 
 def cross_val_test(w, z, r):
     return np.square(r - np.dot(z, w))
+
+def collab_test(ratings, dataMatrix):
+    errList = [row[2] - ratings[int(row[0]-1)][int(row[1]-1)] for row in dataMatrix]
+    errSquare = np.square(errList)
+    err = np.sum(errSquare)
+
+    return err/dataMatrix.shape[0]
+
+def collab_cv_error():
+    totalError = 0
+    minError = 10000
+    

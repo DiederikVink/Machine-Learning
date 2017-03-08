@@ -1,8 +1,91 @@
 import numpy as np
 import data_handler as dh
 from sklearn import preprocessing
+import random
 import testing
 import time
+
+def fold_cv_error(trainMatrix, lamdaList, fold):
+    minError = 10000
+    minLamda = 0
+
+    for lamda in lamdaList:
+        totalError = 0
+
+        for i in xrange(0, trainMatrix.shape[0],10):
+            trainSet = trainMatrix
+            for value in xrange(0,fold):
+                trainSet = np.delete(trainSet, (i), axis = 0)
+
+            testSet = trainMatrix[i:i+fold,:]
+            trainError, testError = collab_filter(trainSet, testSet, 5, lamda, 0.1, 100)
+            if (testError <= minError):
+                minError = testError
+                minLamda = lamda
+    return minLamda
+
+def collab_filter(trainMatrix, testMatrix, k_val, lamda, alpha, iterLimit):
+    userSort = dh.sort(trainMatrix, 0)
+    movieSort = dh.sort(trainMatrix, 1)
+    userBounds = dh.extract(userSort, 0)
+    movieBounds = dh.extract(movieSort, 1)
+
+    weights = np.random.rand(k_val, len(userBounds))
+    movFeat = np.random.rand(k_val, 9066)
+
+    userBounds = [-1] + userBounds
+    movieBounds = [-1] + movieBounds
+    
+    (x, theta) = SGD(alpha, lamda, weights, movFeat, userSort, userBounds, movieSort, movieBounds, iterLimit)
+
+    ratings = np.dot(theta.T, x)
+    testError = testing.collab_test(ratings, testMatrix)
+    trainError = testing.collab_test(ratings, trainMatrix)
+    return trainError, testError
+
+def SGD(alpha, lamda, theta, x, userSort, userBounds, movieSort, movieBounds, iterLimit):
+    xNew = x
+    for i in xrange(0, iterLimit + 1):
+        thetaNew = np.zeros((theta.shape[0],1))
+        for user in xrange(1, theta.shape[1] + 1):
+            userRandVal = random.randint(userBounds[user-1]+1, userBounds[user])
+            userChoice = userSort[userRandVal,1]
+            userTheta = theta[:,int(user)-1]
+            userX = x[:,int(userChoice)-1]
+            userY =  userSort[userRandVal, 2]
+            
+            userAbsError = abs_calc(userTheta, userX, userY)
+
+            block1 = userX * userAbsError
+            block2 = block1 + lamda * userTheta 
+            block3 = block2 * alpha
+            block3 = np.array([userTheta - block3])
+            thetaNew = np.append(thetaNew, block3.T, axis=1)
+        thetaNew = np.delete(thetaNew, (0), axis = 1)
+
+        for mov in xrange(1, len(movieBounds)):
+            movRandVal = random.randint(movieBounds[mov-1]+1, movieBounds[mov])
+            movChoice = movieSort[movRandVal,0]
+            movCurrent = movieSort[movRandVal,1]
+            movTheta = theta[:,int(movChoice)-1]
+            movX = x[:,int(movCurrent)-1]
+            movY = movieSort[movRandVal, 2]
+
+            movAbsError = abs_calc(movTheta, movX, movY)
+            
+            block1 = movTheta * movAbsError
+            block2 = block1 + lamda * movX
+            block3 = block2 * alpha
+            block3 = np.array([movX - block3])
+            xNew[:,int(movCurrent)-1] = block3.T[:,0]
+        
+        x = xNew
+        theta = thetaNew
+    return x, theta
+
+def abs_calc(theta, x, y):
+    return np.dot(theta.T, x) - y
+
 
 def linear_reg(dataMatrix, V, testMatrix, legen):
     trainPerson = dh.sort(dataMatrix, 0)
@@ -15,7 +98,8 @@ def linear_reg(dataMatrix, V, testMatrix, legen):
         (rRegW, ymean) = regression(Z, uLamda, bounds, trainPerson)
         V = preprocessing.scale(Z)
         testLinReg = testing.lin_reg_test(rRegW, V, testMatrix, ymean, 0, 1, 2)
-        return testLinReg
+        trainLinReg = testing.lin_reg_test(rRegW, V, dataMatrix, ymean, 0, 1, 2)
+        return testLinReg, trainLinReg
     elif (legen == 1):
         (bestLegen, uLamda) = legendre_cv(V, bounds, dataMatrix, 4)
         Z = dh.legendre_transform(V, bestLegen)
@@ -24,6 +108,15 @@ def linear_reg(dataMatrix, V, testMatrix, legen):
         testLinReg = testing.lin_reg_test(rRegW, V, testMatrix, ymean, 0, 1, 2)
         trainLinReg = testing.lin_reg_test(rRegW, V, dataMatrix, ymean, 0, 1, 2)
         return bestLegen, testLinReg, trainLinReg
+    elif (legen == 2):
+        (bestLegen, uLamda) = poly_cv(V, bounds, dataMatrix, 4)
+        Z = dh.polynomialization(V, bestLegen)
+        (rRegW, ymean) = regression(Z, uLamda, bounds, trainPerson)
+        V = preprocessing.scale(Z)
+        testLinReg = testing.lin_reg_test(rRegW, V, testMatrix, ymean, 0, 1, 2)
+        trainLinReg = testing.lin_reg_test(rRegW, V, dataMatrix, ymean, 0, 1, 2)
+        return bestLegen, testLinReg, trainLinReg
+
     else:
         return 0
 
@@ -63,6 +156,39 @@ def regression(V, lamda, bounds, dataMatrix):
     rRegW = np.delete(rRegW, (0), axis = 1)
     return (rRegW, ymean)
 
+def poly_cv(V, bounds, dataMatrix, n):
+    legList = np.zeros((n-1, len(bounds)))
+    allLamda = np.zeros((len(bounds),1))
+    for degree in xrange(0, n+1):
+        ECV = np.zeros(len(bounds))
+        Vtrans = dh.polynomialization(V, degree)
+        lamda = gen_lamda()
+        uLamda, minError = lamda_cv(Vtrans, lamda, bounds, dataMatrix)
+        allLamda = np.append(allLamda, uLamda, axis = 1)
+
+        prevBound = 0
+        i = 0
+        for bound in bounds:
+            Z = np.zeros((1,Vtrans.shape[1]))
+            y = np.array([dataMatrix[prevBound:bound+1, 2]]).T
+            tmp = dataMatrix[prevBound:bound+1, 1]
+            prevBound = bound+1
+            for val in tmp:
+                Z = np.append(Z, [Vtrans[int(val-1),:]], axis=0)
+            Z = np.delete(Z, (0), axis=0)
+
+            Znorm = preprocessing.scale(Z)
+            ycent = y - np.mean(y)
+
+            (uLam, ECV[i]) = analytic_cv_error(Znorm, uLamda[i], ycent)
+            i += 1
+        legList[degree-2] = ECV
+    allLamda = np.delete(allLamda, (0), axis = 1)
+    minList = np.argmin(legList, axis=0)
+    count = np.argmax(np.bincount(minList))
+    return (count, allLamda[:,count])
+
+
 def legendre_cv(V, bounds, dataMatrix, n):
     legList = np.zeros((n-1, len(bounds)))
     allLamda = np.zeros((len(bounds),1))
@@ -70,7 +196,7 @@ def legendre_cv(V, bounds, dataMatrix, n):
         ECV = np.zeros(len(bounds))
         Vtrans = dh.legendre_transform(V, degree)
         lamda = gen_lamda()
-        uLamda = lamda_cv(Vtrans, lamda, bounds, dataMatrix)
+        uLamda, minError = lamda_cv(Vtrans, lamda, bounds, dataMatrix)
         allLamda = np.append(allLamda, uLamda, axis = 1)
 
         prevBound = 0
@@ -95,7 +221,6 @@ def legendre_cv(V, bounds, dataMatrix, n):
     count = np.argmax(np.bincount(minList))
     return (count+2, allLamda[:,count])
 
-
 def lamda_cv(V, lamda, bounds, dataMatrix):
     prevBound = 0
     rRegW = np.zeros((V.shape[1],1))
@@ -117,7 +242,7 @@ def lamda_cv(V, lamda, bounds, dataMatrix):
         userLamda = np.append(userLamda, [[minLamda]], axis=0)
 
     userLamda = np.delete(userLamda, (0), axis=0)
-    return userLamda
+    return userLamda, minError
 
 def empirical_cv_error(Z, lamda, y):
     totalError = 0

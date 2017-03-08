@@ -1,7 +1,7 @@
 import csv
 import scipy
 import numpy as np
-from sklearn import decomposition
+from sklearn import decomposition, preprocessing
 
 def read_data(fileName):
     dataMatrix = np.loadtxt(open(fileName, "rb"), delimiter=",", skiprows=1)
@@ -39,7 +39,7 @@ def append_zeros(rindex, mean, val_sum, movie):
     return mean
 
 def extract(dataMatrix, index):
-    val = 1
+    val = dataMatrix[0, index]
     count = 0
     bound = []
     for row in dataMatrix[:,index]:
@@ -93,3 +93,9 @@ def legendre_transform(dataMatrix, n):
 
     trans = np.delete(trans, (0), axis = 1)
     return trans
+
+def polynomialization(dataMatrix, n):
+    poly = preprocessing.PolynomialFeatures(n, interaction_only = False)
+    V = poly.fit_transform(dataMatrix)
+    return V
+
