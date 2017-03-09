@@ -5,83 +5,101 @@ import random
 import testing
 import time
 
-def fold_cv_error(trainMatrix, lamdaList, fold):
+def fold_cv_error(testMatrix, trainMatrix, lamdaList, kList, fold, iterations, alphaScale):
     minError = 10000
-    minLamda = 0
 
-    for lamda in lamdaList:
-        totalError = 0
+    for k in kList:
+        for lamda in lamdaList:
+            totalError = 0
 
-        for i in xrange(0, trainMatrix.shape[0],10):
-            trainSet = trainMatrix
-            for value in xrange(0,fold):
-                trainSet = np.delete(trainSet, (i), axis = 0)
+            start = time.time()
+            for i in xrange(0, trainMatrix.shape[0]-fold, fold):
+                trainSet = trainMatrix
+                for value in xrange(0,fold):
+                    trainSet = np.delete(trainSet, (i), axis = 0)
+                
+                testSet = trainMatrix[i:i+fold,:]
+                trainErrorList, testErrorList, x, theta = collab_filter(trainSet, testMatrix, k, lamda, alphaScale, iterations, False)
 
-            testSet = trainMatrix[i:i+fold,:]
-            trainError, testError = collab_filter(trainSet, testSet, 5, lamda, 0.1, 100)
-            if (testError <= minError):
-                minError = testError
-                minLamda = lamda
-    return minLamda
 
-def collab_filter(trainMatrix, testMatrix, k_val, lamda, alpha, iterLimit):
+                ratings = np.dot(theta.T, x)
+                testError = testing.collab_test(ratings, testSet)
+
+                totalError += testError
+            valError = totalError/(trainMatrix.shape[0]/fold)
+            if (valError <= minError):
+                 minError = valError
+                 minVals = (k, lamda)
+
+            print "\tlamda:", lamda, "\tk:", k, "\terror:", valError, "\ttime: ", time.time() - start
+
+
+    return minVals
+
+def collab_filter(trainMatrix, testMatrix, k_val, lamda, alpha, iterLimit, Graph):
     userSort = dh.sort(trainMatrix, 0)
     movieSort = dh.sort(trainMatrix, 1)
     userBounds = dh.extract(userSort, 0)
     movieBounds = dh.extract(movieSort, 1)
 
-    weights = np.random.rand(k_val, len(userBounds))
+    weights = np.random.rand(k_val, 671)
     movFeat = np.random.rand(k_val, 9066)
 
     userBounds = [-1] + userBounds
     movieBounds = [-1] + movieBounds
     
-    (x, theta) = SGD(alpha, lamda, weights, movFeat, userSort, userBounds, movieSort, movieBounds, iterLimit)
+    (trainError, testError, x, theta) = SGD(alpha, lamda, weights, movFeat, userSort, userBounds, movieSort, movieBounds, iterLimit, testMatrix, trainMatrix, Graph)
 
-    ratings = np.dot(theta.T, x)
-    testError = testing.collab_test(ratings, testMatrix)
-    trainError = testing.collab_test(ratings, trainMatrix)
-    return trainError, testError
+    return trainError, testError, x, theta
 
-def SGD(alpha, lamda, theta, x, userSort, userBounds, movieSort, movieBounds, iterLimit):
+def SGD(alphaScale, lamda, theta, x, userSort, userBounds, movieSort, movieBounds, iterLimit, testMatrix,trainMatrix, Graph):
     xNew = x
+    thetaNew = theta
+    trainError = []
+    testError = []
     for i in xrange(0, iterLimit + 1):
-        thetaNew = np.zeros((theta.shape[0],1))
-        for user in xrange(1, theta.shape[1] + 1):
-            userRandVal = random.randint(userBounds[user-1]+1, userBounds[user])
-            userChoice = userSort[userRandVal,1]
-            userTheta = theta[:,int(user)-1]
-            userX = x[:,int(userChoice)-1]
-            userY =  userSort[userRandVal, 2]
-            
-            userAbsError = abs_calc(userTheta, userX, userY)
+        user = random.randint(1, len(userBounds)-1)
+        userRandVal = random.randint(userBounds[user-1]+1, userBounds[user])
+        userChoice = userSort[userRandVal,1]
+        userCurrent = userSort[userRandVal,0]
+        userTheta = theta[:,int(userCurrent)-1]
+        userX = x[:,int(userChoice)-1]
+        userY =  userSort[userRandVal, 2]
+        
+        userAbsError = abs_calc(userTheta, userX, userY)
 
-            block1 = userX * userAbsError
-            block2 = block1 + lamda * userTheta 
-            block3 = block2 * alpha
-            block3 = np.array([userTheta - block3])
-            thetaNew = np.append(thetaNew, block3.T, axis=1)
-        thetaNew = np.delete(thetaNew, (0), axis = 1)
+        block1 = userX * userAbsError
+        block2 = block1 + lamda * userTheta 
+        alpha = alphaScale * np.linalg.norm(block2)
+        block3 = block2 * alpha
+        block3 = np.array([userTheta - block3])
+        thetaNew[:,int(userCurrent)-1] = block3.T[:,0]
 
-        for mov in xrange(1, len(movieBounds)):
-            movRandVal = random.randint(movieBounds[mov-1]+1, movieBounds[mov])
-            movChoice = movieSort[movRandVal,0]
-            movCurrent = movieSort[movRandVal,1]
-            movTheta = theta[:,int(movChoice)-1]
-            movX = x[:,int(movCurrent)-1]
-            movY = movieSort[movRandVal, 2]
+        mov = random.randint(1, len(movieBounds)-1)
+        movRandVal = random.randint(movieBounds[mov-1]+1, movieBounds[mov])
+        movUser = movieSort[movRandVal,0]
+        movCurrent = movieSort[movRandVal,1]
+        movTheta = theta[:,int(movUser)-1]
+        movX = x[:,int(movCurrent)-1]
+        movY = movieSort[movRandVal, 2]
 
-            movAbsError = abs_calc(movTheta, movX, movY)
-            
-            block1 = movTheta * movAbsError
-            block2 = block1 + lamda * movX
-            block3 = block2 * alpha
-            block3 = np.array([movX - block3])
-            xNew[:,int(movCurrent)-1] = block3.T[:,0]
+        movAbsError = abs_calc(movTheta, movX, movY)
+        
+        block1 = movTheta * movAbsError
+        block2 = block1 + lamda * movX
+        alpha = alphaScale * np.linalg.norm(block2)
+        block3 = block2 * alpha
+        block3 = np.array([movX - block3])
+        xNew[:,int(movCurrent)-1] = block3.T[:,0]
         
         x = xNew
         theta = thetaNew
-    return x, theta
+        if Graph:
+            if (i % (iterLimit/100) == 0):
+                ratings = np.dot(theta.T, x)
+                testError.append(testing.collab_test(ratings, testMatrix))
+                trainError.append(testing.collab_test(ratings, trainMatrix))
+    return trainError, testError, x, theta
 
 def abs_calc(theta, x, y):
     return np.dot(theta.T, x) - y
@@ -162,6 +180,7 @@ def poly_cv(V, bounds, dataMatrix, n):
     for degree in xrange(0, n+1):
         ECV = np.zeros(len(bounds))
         Vtrans = dh.polynomialization(V, degree)
+        print Vtrans.shape
         lamda = gen_lamda()
         uLamda, minError = lamda_cv(Vtrans, lamda, bounds, dataMatrix)
         allLamda = np.append(allLamda, uLamda, axis = 1)
@@ -186,7 +205,7 @@ def poly_cv(V, bounds, dataMatrix, n):
     allLamda = np.delete(allLamda, (0), axis = 1)
     minList = np.argmin(legList, axis=0)
     count = np.argmax(np.bincount(minList))
-    return (count, allLamda[:,count])
+    return (count+1, allLamda[:,count])
 
 
 def legendre_cv(V, bounds, dataMatrix, n):
@@ -304,3 +323,53 @@ def build_y(bounds, dataMatrix, nrows, ncols):
             y[row[0]-1, i] = row[1]
         i += 1
     return y
+
+#def SGD(alpha, lamda, theta, x, userSort, userBounds, movieSort, movieBounds, iterLimit, testMatrix,trainMatrix, Graph):
+#    xNew = x
+#    thetaNew = theta
+#    trainError = []
+#    testError = []
+#    for i in xrange(0, iterLimit + 1):
+#        #thetaNew = np.zeros((theta.shape[0],1))
+#        for user in xrange(1, len(userBounds)):
+#            userRandVal = random.randint(userBounds[user-1]+1, userBounds[user])
+#            userChoice = userSort[userRandVal,1]
+#            userCurrent = userSort[userRandVal,0]
+#            userTheta = theta[:,int(userCurrent)-1]
+#            userX = x[:,int(userChoice)-1]
+#            userY =  userSort[userRandVal, 2]
+#            
+#            userAbsError = abs_calc(userTheta, userX, userY)
+#
+#            block1 = userX * userAbsError
+#            block2 = block1 + lamda * userTheta 
+#            block3 = block2 * alpha
+#            block3 = np.array([userTheta - block3])
+#            thetaNew[:,int(userCurrent)-1] = block3.T[:,0]
+#            #thetaNew = np.append(thetaNew, block3.T, axis=1)
+#        #thetaNew = np.delete(thetaNew, (0), axis = 1)
+#
+#        for mov in xrange(1, len(movieBounds)):
+#            movRandVal = random.randint(movieBounds[mov-1]+1, movieBounds[mov])
+#            movUser = movieSort[movRandVal,0]
+#            movCurrent = movieSort[movRandVal,1]
+#            movTheta = theta[:,int(movUser)-1]
+#            movX = x[:,int(movCurrent)-1]
+#            movY = movieSort[movRandVal, 2]
+#
+#            movAbsError = abs_calc(movTheta, movX, movY)
+#            
+#            block1 = movTheta * movAbsError
+#            block2 = block1 + lamda * movX
+#            block3 = block2 * alpha
+#            block3 = np.array([movX - block3])
+#            xNew[:,int(movCurrent)-1] = block3.T[:,0]
+#        
+#        x = xNew
+#        theta = thetaNew
+#        if Graph:
+#            if (i % 50 == 0):
+#                ratings = np.dot(theta.T, x)
+#                testError.append(testing.collab_test(ratings, testMatrix))
+#                trainError.append(testing.collab_test(ratings, trainMatrix))
+#    return trainError, testError, x, theta

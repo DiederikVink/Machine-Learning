@@ -98,4 +98,3 @@ def polynomialization(dataMatrix, n):
     poly = preprocessing.PolynomialFeatures(n, interaction_only = False)
     V = poly.fit_transform(dataMatrix)
     return V
-
