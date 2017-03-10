@@ -11,59 +11,8 @@ def fold_cv_error(testMatrix, trainMatrix, lamdaList, kList, fold, iterations, a
     minLamda = 1
     minL = 1
 
-    lamda = 0.01
-    L = 1
-
-    for k in kList:
-        totalError = 0
-
-        start = time.time()
-        for i in xrange(0, trainMatrix.shape[0]-fold, fold):
-            trainSet = trainMatrix
-            for value in xrange(0,fold):
-                trainSet = np.delete(trainSet, (i), axis = 0)
-            
-            testSet = trainMatrix[i:i+fold,:]
-            trainErrorList, testErrorList, x, theta = collab_filter(trainSet, testMatrix, k, lamda, alphaScale, iterations, False, L)
-
-            ratings = np.dot(theta.T, x)
-            testError = testing.collab_test(ratings, testSet)
-
-            totalError += testError
-        valError = totalError/(trainMatrix.shape[0]/fold)
-        if (valError <= minError):
-             minError = valError
-             minK = k
-        print "\tlamda:", lamda, "\tk:", k, "\tlasso: ", L, "\terror:", valError, "\ttime: ", time.time() - start
-
-    k = minK
-    minError = 10000
-
-    for L in LList:
-        totalError = 0
-    
-        start = time.time()
-        for i in xrange(0, trainMatrix.shape[0]-fold, fold):
-            trainSet = trainMatrix
-            for value in xrange(0,fold):
-                trainSet = np.delete(trainSet, (i), axis = 0)
-            
-            testSet = trainMatrix[i:i+fold,:]
-            trainErrorList, testErrorList, x, theta = collab_filter(trainSet, testMatrix, k, lamda, alphaScale, iterations, False, L)
-    
-    
-            ratings = np.dot(theta.T, x)
-            testError = testing.collab_test(ratings, testSet)
-    
-            totalError += testError
-        valError = totalError/(trainMatrix.shape[0]/fold)
-        if (valError <= minError):
-             minError = valError
-             minL = L
-        print "\tlamda:", lamda, "\tk:", k, "\tlasso: ", L, "\terror:", valError, "\ttime: ", time.time() - start
-
-    L = minL
-    minError = 10000
+    L = 2
+    k = 10
 
     for lamda in lamdaList:
         totalError = 0
@@ -89,6 +38,58 @@ def fold_cv_error(testMatrix, trainMatrix, lamdaList, kList, fold, iterations, a
 
     lamda = minLamda
 
+    minError = 10000
+
+    for k in kList:
+        totalError = 0
+
+        start = time.time()
+        for i in xrange(0, trainMatrix.shape[0]-fold, fold):
+            trainSet = trainMatrix
+            for value in xrange(0,fold):
+                trainSet = np.delete(trainSet, (i), axis = 0)
+            
+            testSet = trainMatrix[i:i+fold,:]
+            trainErrorList, testErrorList, x, theta = collab_filter(trainSet, testMatrix, k, lamda, alphaScale, iterations, False, L)
+
+            ratings = np.dot(theta.T, x)
+            testError = testing.collab_test(ratings, testSet)
+
+            totalError += testError
+        valError = totalError/(trainMatrix.shape[0]/fold)
+        if (valError <= minError):
+             minError = valError
+             minK = k
+        print "\tlamda:", lamda, "\tk:", k, "\tlasso: ", L, "\terror:", valError, "\ttime: ", time.time() - start
+
+    k = minK
+
+    #for L in LList:
+    #    totalError = 0
+    #
+    #    start = time.time()
+    #    for i in xrange(0, trainMatrix.shape[0]-fold, fold):
+    #        trainSet = trainMatrix
+    #        for value in xrange(0,fold):
+    #            trainSet = np.delete(trainSet, (i), axis = 0)
+    #        
+    #        testSet = trainMatrix[i:i+fold,:]
+    #        trainErrorList, testErrorList, x, theta = collab_filter(trainSet, testMatrix, k, lamda, alphaScale, iterations, False, L)
+    #
+    #
+    #        ratings = np.dot(theta.T, x)
+    #        testError = testing.collab_test(ratings, testSet)
+    #
+    #        totalError += testError
+    #    valError = totalError/(trainMatrix.shape[0]/fold)
+    #    if (valError <= minError):
+    #         minError = valError
+    #         minL = L
+    #    print "\tlamda:", lamda, "\tk:", k, "\tlasso: ", L, "\terror:", valError, "\ttime: ", time.time() - start
+
+    #L = minL
+    minError = 10000
+
     return (k, lamda, L)
 
 def collab_filter(trainMatrix, testMatrix, k_val, lamda, alpha, iterLimit, Graph, L):
@@ -112,30 +113,14 @@ def SGD(alphaScale, lamda, theta, x, userSort, userBounds, movieSort, movieBound
     thetaNew = theta
     trainError = []
     testError = []
+    userCount = 1
+    movCount = 1
     for i in xrange(0, iterLimit + 1):
-        user = random.randint(1, len(userBounds)-1)
-        userRandVal = random.randint(userBounds[user-1]+1, userBounds[user])
-        userChoice = userSort[userRandVal,1]
-        userCurrent = userSort[userRandVal,0]
-        userTheta = theta[:,int(userCurrent)-1]
-        userX = x[:,int(userChoice)-1]
-        userY =  userSort[userRandVal, 2]
-        
-        userAbsError = abs_calc(userTheta, userX, userY)
-
-        block1 = userX * userAbsError
-        if (L == 1):
-            block2 = block1 + lamda * np.sign(userTheta)
-        else:
-            block2 = block1 + lamda * userTheta 
-
-        #alpha = alphaScale * np.linalg.norm(block2)
-        alpha = alphaScale
-        block3 = block2 * alpha
-        block3 = np.array([userTheta - block3])
-        thetaNew[:,int(userCurrent)-1] = block3.T[:,0]
-
-        mov = random.randint(1, len(movieBounds)-1)
+        #mov = random.randint(1, len(movieBounds)-1)
+        mov = movCount
+        movCount += 1
+        if (movCount == len(movieBounds)):
+            movCount = 1
         movRandVal = random.randint(movieBounds[mov-1]+1, movieBounds[mov])
         movUser = movieSort[movRandVal,0]
         movCurrent = movieSort[movRandVal,1]
@@ -157,6 +142,34 @@ def SGD(alphaScale, lamda, theta, x, userSort, userBounds, movieSort, movieBound
         block3 = np.array([movX - block3])
         xNew[:,int(movCurrent)-1] = block3.T[:,0]
         
+        #user = random.randint(1, len(userBounds)-1)
+        user = userCount
+        userCount += 1
+        if (userCount == len(userBounds)):
+            userCount = 1
+        #user = movRandVal
+        #userRandVal = mov
+        userRandVal = random.randint(userBounds[user-1]+1, userBounds[user])
+        userChoice = userSort[userRandVal,1]
+        userCurrent = userSort[userRandVal,0]
+        userTheta = theta[:,int(userCurrent)-1]
+        userX = x[:,int(userChoice)-1]
+        userY =  userSort[userRandVal, 2]
+        
+        userAbsError = abs_calc(userTheta, userX, userY)
+
+        block1 = userX * userAbsError
+        if (L == 1):
+            block2 = block1 + lamda * np.sign(userTheta)
+        else:
+            block2 = block1 + lamda * userTheta 
+
+        #alpha = alphaScale * np.linalg.norm(block2)
+        alpha = alphaScale
+        block3 = block2 * alpha
+        block3 = np.array([userTheta - block3])
+        thetaNew[:,int(userCurrent)-1] = block3.T[:,0]
+
         x = xNew
         theta = thetaNew
         if Graph:
@@ -184,7 +197,7 @@ def linear_reg(dataMatrix, V, testMatrix, legen):
         trainLinReg = testing.lin_reg_test(rRegW, V, dataMatrix, ymean, 0, 1, 2)
         return testLinReg, trainLinReg
     elif (legen == 1):
-        (bestLegen, uLamda) = legendre_cv(V, bounds, dataMatrix, 4)
+        (bestLegen, uLamda) = legendre_cv(V, bounds, dataMatrix, 10)
         Z = dh.legendre_transform(V, bestLegen)
         (rRegW, ymean) = regression(Z, uLamda, bounds, trainPerson)
         V = preprocessing.scale(Z)

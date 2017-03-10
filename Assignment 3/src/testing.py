@@ -1,10 +1,11 @@
 import numpy as np
 
 def mean_test(dataMatrix, meanMatrix, index, data):
-    errList = [meanMatrix[row[index]-1,1] - row[data] for row in dataMatrix]
+    errList = [meanMatrix[int(row[index])-1,1] - row[data] if (meanMatrix[int(row[index])-1,1] != 0) else 0 for row in dataMatrix]
     errSquare = np.square(errList)
+    nonZero = filter(lambda a: a != 0, errSquare)
     err = np.sum(errSquare)
-    return err/dataMatrix.shape[0]
+    return err/len(nonZero)
 
 def lin_reg_test(w, v, r, ymean, user, movie, rating):
     rHat = np.dot(v, w)

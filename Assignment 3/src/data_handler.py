@@ -95,6 +95,6 @@ def legendre_transform(dataMatrix, n):
     return trans
 
 def polynomialization(dataMatrix, n):
-    poly = preprocessing.PolynomialFeatures(n, interaction_only = False)
+    poly = preprocessing.PolynomialFeatures(n, interaction_only=True)
     V = poly.fit_transform(dataMatrix)
     return V
