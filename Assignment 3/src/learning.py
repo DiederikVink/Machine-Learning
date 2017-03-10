@@ -5,38 +5,93 @@ import random
 import testing
 import time
 
-def fold_cv_error(testMatrix, trainMatrix, lamdaList, kList, fold, iterations, alphaScale):
+def fold_cv_error(testMatrix, trainMatrix, lamdaList, kList, fold, iterations, alphaScale, LList):
     minError = 10000
+    minK = 1
+    minLamda = 1
+    minL = 1
+
+    lamda = 0.01
+    L = 1
 
     for k in kList:
-        for lamda in lamdaList:
-            totalError = 0
+        totalError = 0
 
-            start = time.time()
-            for i in xrange(0, trainMatrix.shape[0]-fold, fold):
-                trainSet = trainMatrix
-                for value in xrange(0,fold):
-                    trainSet = np.delete(trainSet, (i), axis = 0)
-                
-                testSet = trainMatrix[i:i+fold,:]
-                trainErrorList, testErrorList, x, theta = collab_filter(trainSet, testMatrix, k, lamda, alphaScale, iterations, False)
+        start = time.time()
+        for i in xrange(0, trainMatrix.shape[0]-fold, fold):
+            trainSet = trainMatrix
+            for value in xrange(0,fold):
+                trainSet = np.delete(trainSet, (i), axis = 0)
+            
+            testSet = trainMatrix[i:i+fold,:]
+            trainErrorList, testErrorList, x, theta = collab_filter(trainSet, testMatrix, k, lamda, alphaScale, iterations, False, L)
 
+            ratings = np.dot(theta.T, x)
+            testError = testing.collab_test(ratings, testSet)
 
-                ratings = np.dot(theta.T, x)
-                testError = testing.collab_test(ratings, testSet)
+            totalError += testError
+        valError = totalError/(trainMatrix.shape[0]/fold)
+        if (valError <= minError):
+             minError = valError
+             minK = k
+        print "\tlamda:", lamda, "\tk:", k, "\tlasso: ", L, "\terror:", valError, "\ttime: ", time.time() - start
 
-                totalError += testError
-            valError = totalError/(trainMatrix.shape[0]/fold)
-            if (valError <= minError):
-                 minError = valError
-                 minVals = (k, lamda)
+    k = minK
+    minError = 10000
 
-            print "\tlamda:", lamda, "\tk:", k, "\terror:", valError, "\ttime: ", time.time() - start
+    for L in LList:
+        totalError = 0
+    
+        start = time.time()
+        for i in xrange(0, trainMatrix.shape[0]-fold, fold):
+            trainSet = trainMatrix
+            for value in xrange(0,fold):
+                trainSet = np.delete(trainSet, (i), axis = 0)
+            
+            testSet = trainMatrix[i:i+fold,:]
+            trainErrorList, testErrorList, x, theta = collab_filter(trainSet, testMatrix, k, lamda, alphaScale, iterations, False, L)
+    
+    
+            ratings = np.dot(theta.T, x)
+            testError = testing.collab_test(ratings, testSet)
+    
+            totalError += testError
+        valError = totalError/(trainMatrix.shape[0]/fold)
+        if (valError <= minError):
+             minError = valError
+             minL = L
+        print "\tlamda:", lamda, "\tk:", k, "\tlasso: ", L, "\terror:", valError, "\ttime: ", time.time() - start
 
+    L = minL
+    minError = 10000
 
-    return minVals
+    for lamda in lamdaList:
+        totalError = 0
+    
+        start = time.time()
+        for i in xrange(0, trainMatrix.shape[0]-fold, fold):
+            trainSet = trainMatrix
+            for value in xrange(0,fold):
+                trainSet = np.delete(trainSet, (i), axis = 0)
+            
+            testSet = trainMatrix[i:i+fold,:]
+            trainErrorList, testErrorList, x, theta = collab_filter(trainSet, testMatrix, k, lamda, alphaScale, iterations, False, L)
+    
+            ratings = np.dot(theta.T, x)
+            testError = testing.collab_test(ratings, testSet)
+    
+            totalError += testError
+        valError = totalError/(trainMatrix.shape[0]/fold)
+        if (valError <= minError):
+             minError = valError
+             minLamda = lamda
+        print "\tlamda:", lamda, "\tk:", k, "\tlasso: ", L, "\terror:", valError, "\ttime: ", time.time() - start
 
-def collab_filter(trainMatrix, testMatrix, k_val, lamda, alpha, iterLimit, Graph):
+    lamda = minLamda
+
+    return (k, lamda, L)
+
+def collab_filter(trainMatrix, testMatrix, k_val, lamda, alpha, iterLimit, Graph, L):
     userSort = dh.sort(trainMatrix, 0)
     movieSort = dh.sort(trainMatrix, 1)
     userBounds = dh.extract(userSort, 0)
@@ -48,11 +103,11 @@ def collab_filter(trainMatrix, testMatrix, k_val, lamda, alpha, iterLimit, Graph
     userBounds = [-1] + userBounds
     movieBounds = [-1] + movieBounds
     
-    (trainError, testError, x, theta) = SGD(alpha, lamda, weights, movFeat, userSort, userBounds, movieSort, movieBounds, iterLimit, testMatrix, trainMatrix, Graph)
+    (trainError, testError, x, theta) = SGD(alpha, lamda, weights, movFeat, userSort, userBounds, movieSort, movieBounds, iterLimit, testMatrix, trainMatrix, Graph, L)
 
     return trainError, testError, x, theta
 
-def SGD(alphaScale, lamda, theta, x, userSort, userBounds, movieSort, movieBounds, iterLimit, testMatrix,trainMatrix, Graph):
+def SGD(alphaScale, lamda, theta, x, userSort, userBounds, movieSort, movieBounds, iterLimit, testMatrix,trainMatrix, Graph, L):
     xNew = x
     thetaNew = theta
     trainError = []
@@ -69,8 +124,13 @@ def SGD(alphaScale, lamda, theta, x, userSort, userBounds, movieSort, movieBound
         userAbsError = abs_calc(userTheta, userX, userY)
 
         block1 = userX * userAbsError
-        block2 = block1 + lamda * userTheta 
-        alpha = alphaScale * np.linalg.norm(block2)
+        if (L == 1):
+            block2 = block1 + lamda * np.sign(userTheta)
+        else:
+            block2 = block1 + lamda * userTheta 
+
+        #alpha = alphaScale * np.linalg.norm(block2)
+        alpha = alphaScale
         block3 = block2 * alpha
         block3 = np.array([userTheta - block3])
         thetaNew[:,int(userCurrent)-1] = block3.T[:,0]
@@ -86,8 +146,13 @@ def SGD(alphaScale, lamda, theta, x, userSort, userBounds, movieSort, movieBound
         movAbsError = abs_calc(movTheta, movX, movY)
         
         block1 = movTheta * movAbsError
-        block2 = block1 + lamda * movX
-        alpha = alphaScale * np.linalg.norm(block2)
+        if (L == 1):
+            block2 = block1 + lamda * np.sign(movX)
+        else:
+            block2 = block1 + lamda * movX
+            
+        #alpha = alphaScale * np.linalg.norm(block2)
+        alpha = alphaScale
         block3 = block2 * alpha
         block3 = np.array([movX - block3])
         xNew[:,int(movCurrent)-1] = block3.T[:,0]
