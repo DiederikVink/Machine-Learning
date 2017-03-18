@@ -12,7 +12,7 @@ def fold_cv_error(testMatrix, trainMatrix, lamdaList, kList, fold, iterations, a
     minL = 1
 
     L = 2
-    k = 10
+    k = 8
 
     for lamda in lamdaList:
         totalError = 0
@@ -205,6 +205,7 @@ def linear_reg(dataMatrix, V, testMatrix, legen):
         trainLinReg = testing.lin_reg_test(rRegW, V, dataMatrix, ymean, 0, 1, 2)
         return bestLegen, testLinReg, trainLinReg
     elif (legen == 2):
+        V = dh.pca_transform(V, 4)
         (bestLegen, uLamda) = poly_cv(V, bounds, dataMatrix, 4)
         Z = dh.polynomialization(V, bestLegen)
         (rRegW, ymean) = regression(Z, uLamda, bounds, trainPerson)
@@ -255,10 +256,10 @@ def regression(V, lamda, bounds, dataMatrix):
 def poly_cv(V, bounds, dataMatrix, n):
     legList = np.zeros((n-1, len(bounds)))
     allLamda = np.zeros((len(bounds),1))
-    for degree in xrange(0, n+1):
+    for degree in xrange(2, n+1):
         ECV = np.zeros(len(bounds))
         Vtrans = dh.polynomialization(V, degree)
-        print Vtrans.shape
+        #print Vtrans.shape
         lamda = gen_lamda()
         uLamda, minError = lamda_cv(Vtrans, lamda, bounds, dataMatrix)
         allLamda = np.append(allLamda, uLamda, axis = 1)
@@ -283,7 +284,7 @@ def poly_cv(V, bounds, dataMatrix, n):
     allLamda = np.delete(allLamda, (0), axis = 1)
     minList = np.argmin(legList, axis=0)
     count = np.argmax(np.bincount(minList))
-    return (count+1, allLamda[:,count])
+    return (count+2, allLamda[:,count])
 
 
 def legendre_cv(V, bounds, dataMatrix, n):

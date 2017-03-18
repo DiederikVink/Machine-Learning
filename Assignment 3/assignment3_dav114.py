@@ -14,10 +14,12 @@ def main():
     testData = dh.read_data('./movie-data/ratings-test.csv')
     movFeat = dh.read_data('./movie-data/movie-features.csv')
 
-    #q3a(trainData, testData)
-    #q3b(movFeat, trainData, testData)    
-    #q3c(movFeat, trainData, testData)
+    start = time.time()
+    q3a(trainData, testData)
+    q3b(movFeat, trainData, testData)    
+    q3c(movFeat, trainData, testData)
     q3d(movFeat, trainData, testData)
+    print "Overall time: ", time.time() - start
 
 
 def q3a(trainData,testData):
@@ -42,13 +44,23 @@ def q3a(trainData,testData):
 def q3b(movFeat, trainData, testData):
 
     V = np.delete(movFeat, (0), axis=1)
-    print lr.linear_reg(trainData, V, testData, 0)
+    testError, trainError = lr.linear_reg(trainData, V, testData, 0)
+    print "--------------------q3b-------------------------"
+    print "Train Error: ", trainError
+    print "Test Error: ", testError
 
 def q3c(movFeat, trainData, testData):
 
     V = np.delete(movFeat, (0), axis=1)
-    #V = dh.pca_transform(V, 4)
-    print lr.linear_reg(trainData, V, testData, 1)
+    bestDegree, testError, trainError = lr.linear_reg(trainData, V, testData, 1)
+    print "--------------------q3c-------------------------"
+    print "Legendre Train Error: ", trainError
+    print "Legendre Test Error: ", testError
+    print "Best Legendre degere: ", bestDegree
+    bestDegree, testError, trainError = lr.linear_reg(trainData, V, testData, 2)
+    print "Polynomialization Train Error: ", trainError
+    print "Polynomialization Test Error: ", testError
+    print "Best Polynomialization degere: ", bestDegree
 
 def q3d(movFeat, trainData, testData):
 
@@ -58,11 +70,11 @@ def q3d(movFeat, trainData, testData):
     kList = [4, 7, 10, 14]
     LList = [1, 2]
     k, lamda, L = lr.fold_cv_error(testData, trainData, lamdaList, kList, 3889, iterations, alphaScale, LList)
-    #k = 10
-    #lamda = 0.05
+    #k = 14
+    #lamda = 0.1
     #L = 2
     alphaScale = 0.0001
-    iterations = 40000000
+    iterations = 50000000
     trainErrorList, testErrorList, x, theta = lr.collab_filter(trainData, testData, k, lamda, alphaScale, iterations, True, L)
 
     ratings = np.dot(theta.T, x)
