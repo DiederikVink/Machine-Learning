@@ -95,7 +95,7 @@ def hard_margin_cv_error(trainX, y, testX, gammaList, fold):
     workQueue = Queue.Queue(len(gammaList))
     dataQueue = Queue.Queue(len(gammaList))
     threads = []
-    threadNum = 10
+    threadNum = 50
 
     # start thread for each gamma
     for threadID in xrange(1,threadNum+1):
