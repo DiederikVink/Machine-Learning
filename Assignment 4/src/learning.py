@@ -141,7 +141,7 @@ def hard_margin_cv_error(trainX, y, testX, gammaList, fold):
     return gamma, runTime
 
 def SVM_run(trainX, y, testX, kernel, gamma):
-    rbf = svm.SVC(kernel=kernel, shrinking=False, gamma=gamma).fit(trainX, y.ravel())
+    rbf = svm.SVC(C=0.0001, kernel=kernel, shrinking=False, gamma=gamma).fit(trainX, y.ravel())
     trainRes = rbf.predict(trainX)
     testRes = rbf.predict(testX)
     return testRes, trainRes
