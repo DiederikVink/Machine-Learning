@@ -1,5 +1,6 @@
 import csv
 import numpy as np
+from sklearn import decomposition, preprocessing
 
 def read_data(fileName):
     dataMatrix = np.loadtxt(open(fileName, "rb"))
@@ -19,9 +20,14 @@ def extract_from_queue(queue):
     data = {}
     while True:
         try:
-            error, gamma = queue.get(block=False)
+            error, gamma, k, C = queue.get(block=False)
         except:
             break
         else:
-            data.update({gamma:error})
+            data.update({error:[gamma, k, C]})
     return data
+
+def pca_transform(dataMatrix, n):
+    PCA = decomposition.PCA(n_components=n)
+    trans = PCA.fit_transform(dataMatrix)
+    return trans

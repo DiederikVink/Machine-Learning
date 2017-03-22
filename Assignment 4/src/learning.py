@@ -23,20 +23,20 @@ def cv_thread_setup (threadID, processQueue, dataQueue):
     while not exitPoint:
         queueLock.acquire()
         if not processQueue.empty():
-            (trainX, y, gamma, fold) = processQueue.get()
+            (trainX, y, gamma, k, C, fold) = processQueue.get()
             print "Thread: ", threadID, " processing: ", gamma
             queueLock.release()
-            valError = cross_validation(trainX, y, gamma, fold)
+            valError = cross_validation(trainX, y, gamma, C, fold)
             print "Thread: ", threadID, "done: ", valError
             queueLock.acquire()
-            dataQueue.put((valError, gamma))
+            dataQueue.put((valError, gamma, k, C))
             queueLock.release()
         else:
             queueLock.release()
 
         
 
-def hard_margin_svm(trainMatrix, testMatrix):
+def margin_svm(trainMatrix, testMatrix, PCA):
     # extract 2 and 8
     twoMatrix, twoY = dh.extract_value(trainMatrix, 2, -1)
     eightMatrix, eightY = dh.extract_value(trainMatrix, 8, 1)
@@ -59,17 +59,31 @@ def hard_margin_svm(trainMatrix, testMatrix):
     step = (max-min)/10
     for i in np.arange(min+step,max+step,step):
         gammaList.append(i)
-    fold = 10
+    fold = 100
 
-    gamma, runTime = hard_margin_cv_error(trainX, trainY, testX, gammaList, fold)
-    testSVMY, trainSVMY = SVM_run(trainX, trainY, testX, kernel='rbf', gamma=gamma)
+    if PCA:
+        kList = [3, 4, 5]
+        cList = [1, 2, 3]
+    else:
+        kList = [256]
+        cList = [1]
+
+
+    gamma, k, C, runTime, valErrors = hard_margin_cv_error(trainX, trainY, testX, gammaList, kList, cList, fold)
+    if PCA:
+        trainXIn = dh.pca_transform(trainX, k)
+        testXIn = dh.pca_transform(testX, k)
+    else:
+        trainXIn = trainX
+        testXIn = testX
+    testSVMY, trainSVMY = SVM_run(trainXIn, trainY, testXIn, kernel='rbf', gamma=gamma, C=C)
     
     trainError = error_calc(trainSVMY, trainY)
     testError = error_calc(testSVMY, testY)
 
-    return testError, trainError, gamma, runTime
+    return testError, trainError, gamma, C, k, runTime, valErrors
 
-def cross_validation(trainX, y, gam, fold):
+def cross_validation(trainX, y, gam, C, fold):
     totalError = 0
     
     for i in xrange(0, trainX.shape[0]-fold, fold):
@@ -83,19 +97,19 @@ def cross_validation(trainX, y, gam, fold):
         testSet = trainX[i:i+fold,:]
         testY = y[i:i+fold,:]
     
-        testRes, trainRes = SVM_run(trainSet, trainY, testSet, kernel='rbf', gamma=gam)
+        testRes, trainRes = SVM_run(trainSet, trainY, testSet, kernel='rbf', gamma=gam, C=C)
         totalError += error_calc(testRes, testY)
     
     return totalError/(trainX.shape[0]/fold)
 
-def hard_margin_cv_error(trainX, y, testX, gammaList, fold):
+def hard_margin_cv_error(trainX, y, testX, gammaList, kList, cList, fold):
     minError = 10000
     minGamma = 1
 
     workQueue = Queue.Queue(len(gammaList))
     dataQueue = Queue.Queue(len(gammaList))
     threads = []
-    threadNum = 50
+    threadNum = 10
 
     # start thread for each gamma
     for threadID in xrange(1,threadNum+1):
@@ -113,8 +127,14 @@ def hard_margin_cv_error(trainX, y, testX, gammaList, fold):
 
     # start filling queue
     queueLock.acquire()
-    for gam in gammaList:
-        workQueue.put((trainX, y, gam, fold))
+    for k in kList:
+        if k = 256:
+            trainXin = trainX
+        else:
+            trainXIn = dh.pca_transform(trainX, k)
+        for C in cList:
+            for gam in gammaList:
+                workQueue.put((trainXIn, y, gam, k, C, fold))
     queueLock.release()
 
     while not workQueue.empty():
@@ -129,7 +149,7 @@ def hard_margin_cv_error(trainX, y, testX, gammaList, fold):
     runTime = time.time() - start
     valErrors = dh.extract_from_queue(dataQueue) 
 
-    gamma = min(valErrors, key=valErrors.get)
+    gamma, k, C = min(valErrors.values())
 
     #for gamma, valError in valErrors.iteritems():
     #    if (valError <= minError):
@@ -138,10 +158,10 @@ def hard_margin_cv_error(trainX, y, testX, gammaList, fold):
 
     #gamma = minGamma
 
-    return gamma, runTime
+    return gamma, k, C, runTime, valErrors
 
-def SVM_run(trainX, y, testX, kernel, gamma):
-    rbf = svm.SVC(kernel=kernel, shrinking=False, gamma=gamma).fit(trainX, y.ravel())
+def SVM_run(trainX, y, testX, kernel, gamma, C):
+    rbf = svm.SVC(kernel=kernel, shrinking=False, gamma=gamma, C=C).fit(trainX, y.ravel())
     trainRes = rbf.predict(trainX)
     testRes = rbf.predict(testX)
     return testRes, trainRes
