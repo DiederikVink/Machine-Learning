@@ -37,7 +37,7 @@ def cv_thread_setup (threadID, processQueue, dataQueue):
 
         
 
-def margin_svm(trainMatrix, testMatrix, PCA, matrixList1, matrixList2):
+def margin_svm(trainMatrix, testMatrix, PCA, matrixList1, matrixList2, gammaMin, gammaMax, gNum, cMin, cMax, cNum, PCAmin, PCAmax, PCAnum):
     # extract 2 and 8
     twoMatrix, twoY = dh.extract_value(trainMatrix, matrixList1, -1)
     eightMatrix, eightY = dh.extract_value(trainMatrix, matrixList2, 1)
@@ -57,10 +57,8 @@ def margin_svm(trainMatrix, testMatrix, PCA, matrixList1, matrixList2):
     trainXnorm = trainX
 
     gammaList = []
-    minVal = 0.0
-    maxVal = 0.015
-    step = (maxVal-minVal)/2
-    for i in np.arange(minVal+step,maxVal+0.000000000001,step):
+    step = (gammaMax-gammaMin)/gNum
+    for i in np.arange(gammaMin+step,gammaMax+0.000000000001,step):
         gammaList.append(i)
     fold = 100
 
@@ -71,17 +69,13 @@ def margin_svm(trainMatrix, testMatrix, PCA, matrixList1, matrixList2):
         #trainXnorm = preprocessing.scale(trainX)
 
         cList = []
-        cMin = 0.0
-        cMax = 0.1
-        step = (cMax-cMin)/2
+        step = (cMax-cMin)/cNum
         for i in np.arange(cMin+step, cMax+0.00000000001, step):
             cList.append(i)
 
         if PCA == 1:
             kList = []
-            PCAmin = 0
-            PCAmax = 100
-            PCAstep = (PCAmax - PCAmin)/2
+            PCAstep = (PCAmax - PCAmin)/PCAnum
             for i in xrange(PCAmin+PCAstep, PCAmax+1, PCAstep):
                 kList.append(i)
         elif PCA == 2:

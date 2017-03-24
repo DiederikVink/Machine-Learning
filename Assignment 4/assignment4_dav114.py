@@ -5,78 +5,126 @@ import numpy as np
 import scipy
 import data_handler as dh
 import learning as ln
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 def main():
-    #q4a()
-    #q4b()
+    q4a()
+    q4b()
     q4c()
     
 def q4a():
     # extract data
+    print "------------------------------------------Question A------------------------------------------"
     trainMatrix = dh.read_data('./data/zip.train')
     testMatrix = dh.read_data('./data/zip.test')
 
     PCA=0
 
-    testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[2], matrixList2=[8])
+    gammaMin=0.0
+    gammaMax=0.015
+    gammaNum=2
+    cMin=0.0
+    cMax=0.1
+    cNum=2
+    PCAmin=0
+    PCAmax=100
+    PCAnum=2
 
-    print "gamma: ", gamma, "\ttime: ", runTime, "\tC: ", C, "\tFeatures: ", PCA
+    rbf, trainSVMY, testSVMY, trainXIn, testXIn, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[2], matrixList2=[8], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
+
+    for k, gammaDict in valErrors.items():
+        tmpC, tmpgamma = min(gammaDict, key=gammaDict.get)
+        print "K: ", k, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)]
+
+    print "Optimal Setup:\tGamma: ", gamma, "\tRuntime: ", runTime, "\tC: ", C, "\tFeatures: ", k
     print "trainError: ", trainError[k], "\ttestError: ", testError[k], "\tcvError: ", cvError[k]
 
-    graph_setup("gamma", "error", "Graph")
+    graph_setup("Gamma", "Error", "RBF Kernel SVM")
     graph_add(valErrors, "Train Error", 'red')
     plt.legend()
-    plt.savefig("q3a.png")
+    plt.savefig("q3a.eps", format='eps', dpi=1000)
 
 def q4b():
 
+    print "\n------------------------------------------Question B------------------------------------------"
     trainMatrix = dh.read_data('./data/zip.train')
     testMatrix = dh.read_data('./data/zip.test')
 
-    graph_setup("k", "Error", "graph")
+    graph_setup("k", "Error", "PCA degree vs Error")
 
     PCA = 1
 
-    rbf, trainSVMY, testSVMY, trainXIn, testXIn, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[2], matrixList2=[8])
+    gammaMin=0.0
+    gammaMax=0.015
+    gammaNum=2
+    cMin=0.0
+    cMax=0.1
+    cNum=2
+    PCAmin=0
+    PCAmax=100
+    PCAnum=2
 
-    print "gamma: ", gamma, "\ttime: ", runTime, "\tC: ", C, "\tFeatures: ", k
-    print "trainError: ", trainError, "\ntestError: ", testError, "\ncvError: ", cvError
+    rbf, trainSVMY, testSVMY, trainXIn, testXIn, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[2], matrixList2=[8], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
+
+    for k, gammaDict in valErrors.items():
+        tmpC, tmpgamma = min(gammaDict, key=gammaDict.get)
+        print "K: ", k, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)]
+
+    print "Optimal Setup:\tGamma: ", gamma, "\tRuntime: ", runTime, "\tC: ", C, "\tFeatures: ", k
+    print "trainError: ", trainError[k], "\ttestError: ", testError[k], "\tcvError: ", cvError[k]
 
     PCA_graph_add(trainError, "Train Error", 'blue')
     PCA_graph_add(testError, "Test Error", 'green')
     PCA_graph_add(cvError, "CV Error", 'red')
 
     plt.legend()
-    plt.savefig("q3b.png")
+    plt.savefig("q3b.eps", format='eps', dpi=1000)
 
 def q4c():
+    print "\n------------------------------------------Question C------------------------------------------"
 
     trainMatrix = dh.read_data('./data/zip.train')
     testMatrix = dh.read_data('./data/zip.test')
 
-    graph_setup("k", "Error", "graph")
 
     PCA = 2
 
-    print "----------------pca-------------------"
-    rbf, trainSVMY, testSVMY, trainX, testX, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[1], matrixList2=[0,2,3,4,5,6,7,8,9])
+    print "PCA: "
 
+    gammaMin=0.0
+    gammaMax=0.015
+    gammaNum=2
+    cMin=0.0
+    cMax=0.1
+    cNum=2
+    PCAmin=0
+    PCAmax=100
+    PCAnum=2
+
+    rbf, trainSVMY, testSVMY, trainX, testX, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[1], matrixList2=[0,2,3,4,5,6,7,8,9], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
+
+    for k, gammaDict in valErrors.items():
+        tmpC, tmpgamma = min(gammaDict, key=gammaDict.get)
+        print "K: ", k, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)]
+        
     print "gamma: ", gamma, "\ttime: ", runTime, "\tC: ", C, "\tFeatures: ", k
-    print "trainError: ", trainError, "\ntestError: ", testError, "\ncvError: ", cvError
+    print "trainError: ", trainError[k], "\ntestError: ", testError[k], "\ncvError: ", cvError[k]
 
-    PCA_graph_add(trainError, "Train Error", 'blue')
-    PCA_graph_add(testError, "Test Error", 'green')
-    PCA_graph_add(cvError, "CV Error", 'red')
+    #graph_setup("k", "Error", "graph")
+    #PCA_graph_add(trainError, "Train Error", 'blue')
+    #PCA_graph_add(testError, "Test Error", 'green')
+    #PCA_graph_add(cvError, "CV Error", 'red')
 
-    plt.legend()
-    plt.savefig("q3c-pca.png")
+    #plt.legend()
+    #plt.savefig("q3c-pca.png")
 
-    graph_setup("feature1", "feature2", "PCA-graph")
-    q4c_graph(testX, testY, rbf, "pca-contour-test.png")
-    graph_setup("feature1", "feature2", "PCA-graph")
-    q4c_graph(trainX, trainY, rbf, "pca-contour-train.png", 1)
+    graph_setup("Feature 1", "Feature 2", "PCA Test Set Results")
+    q4c_graph(testX, testY, rbf, "pca-contour-test.eps")
+    graph_setup("feature1", "feature2", "PCA Train Set Results")
+    q4c_graph(trainX, trainY, rbf, "pca-contour-train.eps", 1)
 
 
     #------------------------------------------------------------------------------
@@ -89,24 +137,39 @@ def q4c():
     
     PCA = 0
 
-    print "----------------feature-------------------"
-    rbf, trainSVMY, testSVMY, trainX, testX, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[1], matrixList2=[0,2,3,4,5,6,7,8,9])
+    print "\nFeature: "
+
+    gammaMin=0.0
+    gammaMax=0.015
+    gammaNum=2
+    cMin=0.0
+    cMax=0.1
+    cNum=2
+    PCAmin=0
+    PCAmax=100
+    PCAnum=2
+
+    rbf, trainSVMY, testSVMY, trainX, testX, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[1], matrixList2=[0,2,3,4,5,6,7,8,9], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
+
+    for k, gammaDict in valErrors.items():
+        tmpC, tmpgamma = min(gammaDict, key=gammaDict.get)
+        print "K: ", k, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)]
 
     print "gamma: ", gamma, "\ttime: ", runTime, "\tC: ", C, "\tFeatures: ", k
-    print "trainError: ", trainError, "\ntestError: ", testError, "\ncvError: ", cvError
+    print "trainError: ", trainError[k], "\ntestError: ", testError[k], "\ncvError: ", cvError[k]
 
-    PCA_graph_add(trainError, "Train Error", 'blue')
-    PCA_graph_add(testError, "Test Error", 'green')
-    PCA_graph_add(cvError, "CV Error", 'red')
+    #PCA_graph_add(trainError, "Train Error", 'blue')
+    #PCA_graph_add(testError, "Test Error", 'green')
+    #PCA_graph_add(cvError, "CV Error", 'red')
 
-    plt.legend()
-    plt.savefig("q3c-feature.png")
+    #plt.legend()
+    #plt.savefig("q3c-feature.png")
 
 
-    graph_setup("feature1", "feature2", "feature-graph")
-    q4c_graph(testX, testY, rbf, "feature-contour-test.png")
-    graph_setup("feature1", "feature2", "feature-graph")
-    q4c_graph(trainX, trainY, rbf, "feature-contour-train.png", 1)
+    graph_setup("Feature 1", "Feature 2", "Feature Data Test Set Results")
+    q4c_graph(testX, testY, rbf, "feature-contour-test.eps")
+    graph_setup("Feature 1", "Feature 2", "Feature Data Train Set Results")
+    q4c_graph(trainX, trainY, rbf, "feature-contour-train.eps", 1)
 
 
 def q4c_graph(dataX, dataY, rbf, filename, train=0):
@@ -118,13 +181,17 @@ def q4c_graph(dataX, dataY, rbf, filename, train=0):
     SV = rbf.support_
 
     testCol = ['red' if x == 1 else 'blue' for x in dataY]
+    testFC = [testCol[x] for x in dataY]
+    testS = [1 for x in dataY]
     if train:
         for x in SV:
-            testCol[x] = 'magenta'
+            testFC[x] = None
+            testS[x] = 20
 
     plt.scatter(dataX[:,0], dataX[:,1], color=testCol, s=1, cmap=plt.cm.coolwarm)
+    plt.scatter(datax[:,0], dataX[:,1], color=testCol, s=testS, facevolors=testFC, cmap=plt.cm.coolwarm)
     plt.contour(cont1, cont2, Z, levels=[0])
-    plt.savefig(filename)
+    plt.savefig(filename, format='eps', dpi=1000)
 
 
 def matrixExtraction(trainMatrix, testMatrix, matrixList1, matrixList2):
