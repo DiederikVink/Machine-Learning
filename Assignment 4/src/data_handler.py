@@ -8,10 +8,9 @@ def read_data(fileName):
 
 def extract_value(matrix, valueList, classification):
     valMatrix = np.zeros((1,matrix.shape[1]-1))
-    for value in valueList:
-        for row in matrix:
-            if row[0] == value:
-                valMatrix = np.append(valMatrix, [row[1:]], axis=0)
+    for row in matrix:
+        if row[0] in valueList:
+            valMatrix = np.append(valMatrix, [row[1:]], axis=0)
     valMatrix = np.delete(valMatrix, (0), axis=0)
     valVector = classification * np.ones((valMatrix.shape[0],1))
     return valMatrix, valVector

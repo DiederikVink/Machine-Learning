@@ -58,8 +58,8 @@ def margin_svm(trainMatrix, testMatrix, PCA, matrixList1, matrixList2):
 
     gammaList = []
     minVal = 0.0
-    maxVal = 0.1
-    step = (maxVal-minVal)/5
+    maxVal = 0.015
+    step = (maxVal-minVal)/2
     for i in np.arange(minVal+step,maxVal+0.000000000001,step):
         gammaList.append(i)
     fold = 100
@@ -72,29 +72,24 @@ def margin_svm(trainMatrix, testMatrix, PCA, matrixList1, matrixList2):
 
         cList = []
         cMin = 0.0
-        cMax = 0.5
-        step = (cMax-cMin)/5
+        cMax = 0.1
+        step = (cMax-cMin)/2
         for i in np.arange(cMin+step, cMax+0.00000000001, step):
             cList.append(i)
 
-        kList = []
-        PCAmin = 0
-        PCAmax = 100
-        PCAstep = (PCAmax - PCAmin)/5
-        for i in xrange(PCAmin+PCAstep, PCAmax+1, PCAstep):
-            kList.append(i)
-    elif:
-
+        if PCA == 1:
+            kList = []
+            PCAmin = 0
+            PCAmax = 100
+            PCAstep = (PCAmax - PCAmin)/2
+            for i in xrange(PCAmin+PCAstep, PCAmax+1, PCAstep):
+                kList.append(i)
+        elif PCA == 2:
+            kList = [2]
     else:
         cList = [1]
         kList = [256]
 
-    #if PCA:
-    #    trainXIn = dh.pca_transform(trainX, PCA)
-    #    testXIn = dh.pca_transform(testX, PCA)
-    #else:
-    #    trainXIn = trainX
-    #    testXIn = testX
     trainXIn = trainXnorm
     testXIn = testXnorm
 
@@ -108,15 +103,21 @@ def margin_svm(trainMatrix, testMatrix, PCA, matrixList1, matrixList2):
     for k, gammaDict in valErrors.items():
 
         C, gamma = min(gammaDict, key=gammaDict.get)
-        PCAMatrix = dh.pca_transform(trainXnorm, k)
-        trainXIn = PCAMatrix.transform(trainXnorm)
-        testXIn = PCAMatrix.transform(testXnorm)
-        testSVMY, trainSVMY = SVM_run(trainXIn, trainY, testXIn, kernel='rbf', gamma=gamma, C=C)
+        if PCA:
+            PCAMatrix = dh.pca_transform(trainXnorm, k)
+            trainXIn = PCAMatrix.transform(trainXnorm)
+            #trainXIn = preprocessing.scale(trainXIn)
+            testXIn = PCAMatrix.transform(testXnorm)
+            #testXIn = preprocessing.scale(testXIn)
+        else:
+            trainXIn = trainXnorm
+            testXIn = testXnorm
+        testSVMY, trainSVMY, rbf = SVM_run(trainXIn, trainY, testXIn, kernel='rbf', gamma=gamma, C=C)
         trainError.update({k: error_calc(trainSVMY, trainY)})
         testError.update({k: error_calc(testSVMY, testY)})
         cvError.update({k: gammaDict[(C, gamma)]})
 
-    return testError, trainError, cvError, gamma, C, k, runTime, valErrors
+    return rbf, trainSVMY, testSVMY, trainXIn, testXIn, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors
 
 def cross_validation(trainX, y, gam, C, fold):
     totalError = 0
@@ -132,7 +133,10 @@ def cross_validation(trainX, y, gam, C, fold):
         testSet = trainX[i:i+fold,:]
         testY = y[i:i+fold,:]
     
-        testRes, trainRes = SVM_run(trainSet, trainY, testSet, kernel='rbf', gamma=gam, C=C)
+        #trainSet = preprocessing.scale(trainSet)
+        #testSet = preprocessing.scale(testSet)
+
+        testRes, trainRes, rbf = SVM_run(trainSet, trainY, testSet, kernel='rbf', gamma=gam, C=C)
         totalError += error_calc(testRes, testY)
     
     return totalError/(trainX.shape[0]/fold)
@@ -195,7 +199,7 @@ def SVM_run(trainX, y, testX, kernel, gamma, C):
     rbf = svm.SVC(kernel=kernel, shrinking=False, gamma=gamma, C=C).fit(trainX, y.ravel())
     trainRes = rbf.predict(trainX)
     testRes = rbf.predict(testX)
-    return testRes, trainRes
+    return testRes, trainRes, rbf
 
 def error_calc(svmY, y):
     diff = svmY + y.ravel()
