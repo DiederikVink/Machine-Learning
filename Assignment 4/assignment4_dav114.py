@@ -181,11 +181,12 @@ def q4c_graph(dataX, dataY, rbf, filename, train=0):
     SV = rbf.support_
 
     testCol = ['red' if x == 1 else 'blue' for x in dataY]
-    testFC = ['magenta' if x == 1 else 'cyan' for x in dataY]
-    testEdge = ['magenta' if x == 1 else 'cyan' for x in dataY]
+    testFC = ['red' if x == 1 else 'blue' for x in dataY]
+    testEdge = ['red' if x == 1 else 'blue' for x in dataY]
     testS = [1 for x in dataY]
     if train:
         for x in SV:
+	    testEdge = 'cyan'
             testFC[x] = 'none'
             testS[x] = 20
 
