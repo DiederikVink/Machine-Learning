@@ -57,12 +57,12 @@ def q4b():
 
     PCA = 1
 
-    gammaMin=0.005
+    gammaMin=0.000
     gammaMax=0.015
     gammaNum=10
-    cMin=0.1
-    cMax=1.0
-    cNum=10
+    cMin=0.0
+    cMax=25.0
+    cNum=25
     PCAmin=0
     PCAmax=100
     PCAnum=100
@@ -241,7 +241,7 @@ def graph_add(valErrors, PCA, color):
             data["gamma"].append(gamma)
             data["y"].append(error)
 
-    plt.scatter(data["gamma"], data["y"], s=2, c=color, label = PCA);
+    plt.scatter(data["gamma"], data["y"], s=2, color=color, label = PCA);
 
 
 
