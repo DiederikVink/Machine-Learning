@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 def main():
-    q4a()
-    q4b()
+    #q4a()
+    #q4b()
     q4c()
     
 def q4a():
@@ -181,15 +181,15 @@ def q4c_graph(dataX, dataY, rbf, filename, train=0):
     SV = rbf.support_
 
     testCol = ['red' if x == 1 else 'blue' for x in dataY]
-    testFC = [testCol[x] for x in dataY]
+    testFC = ['magenta' if x == 1 else 'cyan' for x in dataY]
     testS = [1 for x in dataY]
     if train:
         for x in SV:
-            testFC[x] = None
+            testFC[x] = 'none'
             testS[x] = 20
 
     plt.scatter(dataX[:,0], dataX[:,1], color=testCol, s=1, cmap=plt.cm.coolwarm)
-    plt.scatter(datax[:,0], dataX[:,1], color=testCol, s=testS, facevolors=testFC, cmap=plt.cm.coolwarm)
+    plt.scatter(dataX[:,0], dataX[:,1], color=testCol, s=testS, facecolors=testFC, cmap=plt.cm.coolwarm)
     plt.contour(cont1, cont2, Z, levels=[0])
     plt.savefig(filename, format='eps', dpi=1000)
 
