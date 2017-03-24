@@ -3,6 +3,7 @@ import time
 import Queue
 import threading
 from sklearn import svm
+from sklearn import preprocessing
 import data_handler as dh
 
 exitPoint = 0
@@ -23,65 +24,99 @@ def cv_thread_setup (threadID, processQueue, dataQueue):
     while not exitPoint:
         queueLock.acquire()
         if not processQueue.empty():
-            (trainX, y, gamma, k, C, fold) = processQueue.get()
-            print "Thread: ", threadID, " processing: ", gamma
+            (trainX, y, gamma, C, k, fold) = processQueue.get()
+            #print "Thread: ", threadID, " processing: ", gamma
             queueLock.release()
             valError = cross_validation(trainX, y, gamma, C, fold)
-            print "Thread: ", threadID, "done: ", valError
+            #print "Thread: ", threadID, "done: ", valError
             queueLock.acquire()
-            dataQueue.put((valError, gamma, k, C))
+            dataQueue.put((valError, gamma, C, k))
             queueLock.release()
         else:
             queueLock.release()
 
         
 
-def margin_svm(trainMatrix, testMatrix, PCA):
+def margin_svm(trainMatrix, testMatrix, PCA, matrixList1, matrixList2):
     # extract 2 and 8
-    twoMatrix, twoY = dh.extract_value(trainMatrix, 2, -1)
-    eightMatrix, eightY = dh.extract_value(trainMatrix, 8, 1)
+    twoMatrix, twoY = dh.extract_value(trainMatrix, matrixList1, -1)
+    eightMatrix, eightY = dh.extract_value(trainMatrix, matrixList2, 1)
     
     # create X and Y vectors
     trainY = np.append(twoY, eightY, axis = 0)
     trainX = np.append(twoMatrix, eightMatrix, axis = 0)
 
     # extract 2 and 8
-    twoMatrix, twoY = dh.extract_value(testMatrix, 2, -1)
-    eightMatrix, eightY = dh.extract_value(testMatrix, 8, 1)
+    twoMatrix, twoY = dh.extract_value(testMatrix, matrixList1, -1)
+    eightMatrix, eightY = dh.extract_value(testMatrix, matrixList2, 1)
     
-    # create X and Y vectors
     testY = np.append(twoY, eightY, axis = 0)
     testX = np.append(twoMatrix, eightMatrix, axis = 0)
 
+    testXnorm = testX
+    trainXnorm = trainX
+
     gammaList = []
-    min = 0.0
-    max = 0.1
-    step = (max-min)/10
-    for i in np.arange(min+step,max+step,step):
+    minVal = 0.0
+    maxVal = 0.1
+    step = (maxVal-minVal)/5
+    for i in np.arange(minVal+step,maxVal+0.000000000001,step):
         gammaList.append(i)
     fold = 100
 
     if PCA:
-        kList = [3, 4, 5]
-        cList = [1, 2, 3]
+        testXnorm = testX - np.mean(testX)
+        #testXnorm = preprocessing.scale(testX)
+        trainXnorm = trainX - np.mean(trainX)
+        #trainXnorm = preprocessing.scale(trainX)
+
+        cList = []
+        cMin = 0.0
+        cMax = 0.5
+        step = (cMax-cMin)/5
+        for i in np.arange(cMin+step, cMax+0.00000000001, step):
+            cList.append(i)
+
+        kList = []
+        PCAmin = 0
+        PCAmax = 100
+        PCAstep = (PCAmax - PCAmin)/5
+        for i in xrange(PCAmin+PCAstep, PCAmax+1, PCAstep):
+            kList.append(i)
+    elif:
+
     else:
-        kList = [256]
         cList = [1]
+        kList = [256]
 
+    #if PCA:
+    #    trainXIn = dh.pca_transform(trainX, PCA)
+    #    testXIn = dh.pca_transform(testX, PCA)
+    #else:
+    #    trainXIn = trainX
+    #    testXIn = testX
+    trainXIn = trainXnorm
+    testXIn = testXnorm
 
-    gamma, k, C, runTime, valErrors = hard_margin_cv_error(trainX, trainY, testX, gammaList, kList, cList, fold)
-    if PCA:
-        trainXIn = dh.pca_transform(trainX, k)
-        testXIn = dh.pca_transform(testX, k)
-    else:
-        trainXIn = trainX
-        testXIn = testX
-    testSVMY, trainSVMY = SVM_run(trainXIn, trainY, testXIn, kernel='rbf', gamma=gamma, C=C)
+    runTime, valErrors = hard_margin_cv_error(trainXIn, trainY, testXIn, gammaList, cList, kList, fold)
     
-    trainError = error_calc(trainSVMY, trainY)
-    testError = error_calc(testSVMY, testY)
 
-    return testError, trainError, gamma, C, k, runTime, valErrors
+    trainError = {}
+    testError = {}
+    cvError = {}
+
+    for k, gammaDict in valErrors.items():
+
+        C, gamma = min(gammaDict, key=gammaDict.get)
+        PCAMatrix = dh.pca_transform(trainXnorm, k)
+        trainXIn = PCAMatrix.transform(trainXnorm)
+        testXIn = PCAMatrix.transform(testXnorm)
+        testSVMY, trainSVMY = SVM_run(trainXIn, trainY, testXIn, kernel='rbf', gamma=gamma, C=C)
+        trainError.update({k: error_calc(trainSVMY, trainY)})
+        testError.update({k: error_calc(testSVMY, testY)})
+        cvError.update({k: gammaDict[(C, gamma)]})
+
+    return testError, trainError, cvError, gamma, C, k, runTime, valErrors
 
 def cross_validation(trainX, y, gam, C, fold):
     totalError = 0
@@ -102,14 +137,16 @@ def cross_validation(trainX, y, gam, C, fold):
     
     return totalError/(trainX.shape[0]/fold)
 
-def hard_margin_cv_error(trainX, y, testX, gammaList, kList, cList, fold):
+def hard_margin_cv_error(trainX, y, testX, gammaList, cList, kList, fold):
     minError = 10000
     minGamma = 1
 
-    workQueue = Queue.Queue(len(gammaList))
-    dataQueue = Queue.Queue(len(gammaList))
+    workQueue = Queue.Queue(len(gammaList) * len(cList) * len(kList))
+    dataQueue = Queue.Queue(len(gammaList) * len(cList) * len(kList))
+    with workQueue.mutex:
+        dataQueue.queue.clear()
     threads = []
-    threadNum = 10
+    threadNum = 4
 
     # start thread for each gamma
     for threadID in xrange(1,threadNum+1):
@@ -128,13 +165,14 @@ def hard_margin_cv_error(trainX, y, testX, gammaList, kList, cList, fold):
     # start filling queue
     queueLock.acquire()
     for k in kList:
-        if k = 256:
-            trainXin = trainX
+        if k == 256:
+            trainXIn =  trainX
         else:
-            trainXIn = dh.pca_transform(trainX, k)
+            PCAMat = dh.pca_transform(trainX, k)
+            trainXIn = PCAMat.transform(trainX)
         for C in cList:
             for gam in gammaList:
-                workQueue.put((trainXIn, y, gam, k, C, fold))
+                workQueue.put((trainXIn, y, gam, C, k, fold))
     queueLock.release()
 
     while not workQueue.empty():
@@ -149,16 +187,9 @@ def hard_margin_cv_error(trainX, y, testX, gammaList, kList, cList, fold):
     runTime = time.time() - start
     valErrors = dh.extract_from_queue(dataQueue) 
 
-    gamma, k, C = min(valErrors.values())
+    exitPoint = 0
 
-    #for gamma, valError in valErrors.iteritems():
-    #    if (valError <= minError):
-    #        minError = valError
-    #        minGamma = gam
-
-    #gamma = minGamma
-
-    return gamma, k, C, runTime, valErrors
+    return runTime, valErrors
 
 def SVM_run(trainX, y, testX, kernel, gamma, C):
     rbf = svm.SVC(kernel=kernel, shrinking=False, gamma=gamma, C=C).fit(trainX, y.ravel())
