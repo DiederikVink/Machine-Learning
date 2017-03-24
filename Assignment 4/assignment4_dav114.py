@@ -25,7 +25,7 @@ def q4a():
 
     gammaMin=0.0
     gammaMax=0.015
-    gammaNum=200
+    gammaNum=500
     cMin=0.0
     cMax=0.1
     cNum=10
@@ -241,7 +241,7 @@ def graph_add(valErrors, PCA, color):
             data["gamma"].append(gamma)
             data["y"].append(error)
 
-    plt.plot(data["gamma"], data["y"], color=color, label = PCA);
+    plt.scatter(data["gamma"], data["y"], color=color, label = PCA);
 
 
 
