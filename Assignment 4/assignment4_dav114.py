@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 def main():
-    #q4a()
-    #q4b()
+    q4a()
+    q4b()
     q4c()
     
 def q4a():
@@ -25,13 +25,13 @@ def q4a():
 
     gammaMin=0.0
     gammaMax=0.015
-    gammaNum=2
+    gammaNum=10
     cMin=0.0
     cMax=0.1
-    cNum=2
+    cNum=10
     PCAmin=0
     PCAmax=100
-    PCAnum=2
+    PCAnum=100
 
     rbf, trainSVMY, testSVMY, trainXIn, testXIn, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[2], matrixList2=[8], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
 
@@ -58,11 +58,11 @@ def q4b():
     PCA = 1
 
     gammaMin=0.005
-    gammaMax=0.02
-    gammaNum=6
+    gammaMax=0.015
+    gammaNum=10
     cMin=0.1
-    cMax=1
-    cNum=6
+    cMax=1.0
+    cNum=10
     PCAmin=0
     PCAmax=100
     PCAnum=100
@@ -229,7 +229,7 @@ def PCA_graph_add(valErrors, PCA, color):
         data["k"].append(k)
         data["y"].append(error)
 
-    plt.scatter(data["k"], data["y"], s=2, color=color, label = PCA);
+    plt.plot(data["k"], data["y"], color=color, label = PCA);
 
 def graph_add(valErrors, PCA, color):
 
