@@ -12,8 +12,8 @@ import matplotlib.cm as cm
 
 def main():
     q4a()
-    q4b()
-    q4c()
+    #q4b()
+    #q4c()
     
 def q4a():
     # extract data
@@ -25,7 +25,7 @@ def q4a():
 
     gammaMin=0.0
     gammaMax=0.015
-    gammaNum=10
+    gammaNum=50
     cMin=0.0
     cMax=0.1
     cNum=10
