@@ -57,15 +57,15 @@ def q4b():
 
     PCA = 1
 
-    gammaMin=0.0
-    gammaMax=0.015
-    gammaNum=2
-    cMin=0.0
-    cMax=0.1
-    cNum=2
+    gammaMin=0.005
+    gammaMax=0.02
+    gammaNum=6
+    cMin=0.1
+    cMax=1
+    cNum=6
     PCAmin=0
     PCAmax=100
-    PCAnum=2
+    PCAnum=100
 
     rbf, trainSVMY, testSVMY, trainXIn, testXIn, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[2], matrixList2=[8], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
 
@@ -181,7 +181,7 @@ def q4c_graph(dataX, dataY, rbf, filename, train=0):
     SV = rbf.support_
 
     testCol = ['red' if x == 1 else 'blue' for x in dataY]
-    testFC = ['red' if x == 1 else 'blue' for x in dataY]
+    #testFC = ['red' if x == 1 else 'blue' for x in dataY]
     testEdge = ['red' if x == 1 else 'blue' for x in dataY]
     testS = [1 for x in dataY]
     if train:
@@ -190,11 +190,11 @@ def q4c_graph(dataX, dataY, rbf, filename, train=0):
 	    	testEdge[x] = 'cyan'
 	    else:
 		testEdge[x] = 'magenta'
-            testFC[x] = 'none'
-            testS[x] = 20
+            #testFC[x] = 'none'
+            #testS[x] = 20
 
     #plt.scatter(dataX[:,0], dataX[:,1], color=testCol, s=1, cmap=plt.cm.coolwarm)
-    plt.scatter(dataX[:,0], dataX[:,1], color=testCol, s=testS, edgecolors=testEdge, facecolors=testFC, cmap=plt.cm.coolwarm)
+    plt.scatter(dataX[:,0], dataX[:,1], color=testCol, s=testS, edgecolors=testEdge, facecolors=testCol, cmap=plt.cm.coolwarm)
     plt.contour(cont1, cont2, Z, levels=[0])
     plt.savefig(filename, format='eps', dpi=1000)
 
