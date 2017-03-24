@@ -186,7 +186,10 @@ def q4c_graph(dataX, dataY, rbf, filename, train=0):
     testS = [1 for x in dataY]
     if train:
         for x in SV:
-	    testEdge[x] = 'cyan'
+	    if testCol[x] == 'red':
+	    	testEdge[x] = 'cyan'
+	    else:
+		testEdge[x] = 'magenta'
             testFC[x] = 'none'
             testS[x] = 20
 
