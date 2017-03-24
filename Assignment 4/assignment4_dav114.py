@@ -35,9 +35,9 @@ def q4a():
 
     rbf, trainSVMY, testSVMY, trainXIn, testXIn, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[2], matrixList2=[8], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
 
-    for k, gammaDict in valErrors.items():
+    for tmpk, gammaDict in valErrors.items():
         tmpC, tmpgamma = min(gammaDict, key=gammaDict.get)
-        print "K: ", k, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)]
+        print "K: ", tmpk, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)], "\ttrainError: ", trainError[tmpk], "\ttestError: ", testError[tmpk]
 
     print "Optimal Setup:\tGamma: ", gamma, "\tRuntime: ", runTime, "\tC: ", C, "\tFeatures: ", k
     print "trainError: ", trainError[k], "\ttestError: ", testError[k], "\tcvError: ", cvError[k]
@@ -69,9 +69,9 @@ def q4b():
 
     rbf, trainSVMY, testSVMY, trainXIn, testXIn, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[2], matrixList2=[8], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
 
-    for k, gammaDict in valErrors.items():
+    for tmpk, gammaDict in valErrors.items():
         tmpC, tmpgamma = min(gammaDict, key=gammaDict.get)
-        print "K: ", k, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)]
+        print "K: ", tmpk, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)], "\ttrainError: ", trainError[tmpk], "\ttestError: ", testError[tmpk]
 
     print "Optimal Setup:\tGamma: ", gamma, "\tRuntime: ", runTime, "\tC: ", C, "\tFeatures: ", k
     print "trainError: ", trainError[k], "\ttestError: ", testError[k], "\tcvError: ", cvError[k]
@@ -106,9 +106,9 @@ def q4c():
 
     rbf, trainSVMY, testSVMY, trainX, testX, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[1], matrixList2=[0,2,3,4,5,6,7,8,9], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
 
-    for k, gammaDict in valErrors.items():
+    for tmpk, gammaDict in valErrors.items():
         tmpC, tmpgamma = min(gammaDict, key=gammaDict.get)
-        print "K: ", k, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)]
+        print "K: ", tmpk, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)], "\ttrainError: ", trainError[tmpk], "\ttestError: ", testError[tmpk]
         
     print "gamma: ", gamma, "\ttime: ", runTime, "\tC: ", C, "\tFeatures: ", k
     print "trainError: ", trainError[k], "\ntestError: ", testError[k], "\ncvError: ", cvError[k]
@@ -151,9 +151,9 @@ def q4c():
 
     rbf, trainSVMY, testSVMY, trainX, testX, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[1], matrixList2=[0,2,3,4,5,6,7,8,9], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
 
-    for k, gammaDict in valErrors.items():
+    for tmpk, gammaDict in valErrors.items():
         tmpC, tmpgamma = min(gammaDict, key=gammaDict.get)
-        print "K: ", k, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)]
+        print "K: ", tmpk, "\tC: ", tmpC, "\tGamma: ", tmpgamma, "\tcvError: ", gammaDict[(tmpC, tmpgamma)], "\ttrainError: ", trainError[tmpk], "\ttestError: ", testError[tmpk]
 
     print "gamma: ", gamma, "\ttime: ", runTime, "\tC: ", C, "\tFeatures: ", k
     print "trainError: ", trainError[k], "\ntestError: ", testError[k], "\ncvError: ", cvError[k]
@@ -229,7 +229,7 @@ def PCA_graph_add(valErrors, PCA, color):
         data["k"].append(k)
         data["y"].append(error)
 
-    plt.scatter(data["k"], data["y"], s=2, c=color, label = PCA);
+    plt.scatter(data["k"], data["y"], s=2, color=color, label = PCA);
 
 def graph_add(valErrors, PCA, color):
 
