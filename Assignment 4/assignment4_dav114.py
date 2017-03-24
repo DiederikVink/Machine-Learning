@@ -24,7 +24,7 @@ def q4a():
     PCA=0
 
     gammaMin=0.0
-    gammaMax=0.015
+    gammaMax=0.05
     gammaNum=500
     cMin=0.0
     cMax=0.1
@@ -95,11 +95,11 @@ def q4c():
     print "PCA: "
 
     gammaMin=0.0
-    gammaMax=0.015
-    gammaNum=2
+    gammaMax=0.02
+    gammaNum=10
     cMin=0.0
-    cMax=0.1
-    cNum=2
+    cMax=10
+    cNum=20
     PCAmin=0
     PCAmax=100
     PCAnum=2
@@ -138,16 +138,6 @@ def q4c():
     PCA = 0
 
     print "\nFeature: "
-
-    gammaMin=0.0
-    gammaMax=0.015
-    gammaNum=2
-    cMin=0.0
-    cMax=0.1
-    cNum=2
-    PCAmin=0
-    PCAmax=100
-    PCAnum=2
 
     rbf, trainSVMY, testSVMY, trainX, testX, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[1], matrixList2=[0,2,3,4,5,6,7,8,9], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
 
@@ -241,7 +231,7 @@ def graph_add(valErrors, PCA, color):
             data["gamma"].append(gamma)
             data["y"].append(error)
 
-    plt.scatter(data["gamma"], data["y"], color=color, label = PCA);
+    plt.scatter(data["gamma"], data["y"], s=2, color=color, label = PCA);
 
 
 

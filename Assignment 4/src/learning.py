@@ -144,7 +144,7 @@ def hard_margin_cv_error(trainX, y, testX, gammaList, cList, kList, fold):
     with workQueue.mutex:
         dataQueue.queue.clear()
     threads = []
-    threadNum = 8
+    threadNum = 4
 
     # start thread for each gamma
     for threadID in xrange(1,threadNum+1):
