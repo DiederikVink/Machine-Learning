@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 def main():
-    q4a()
+    #q4a()
     #q4b()
-    #q4c()
+    q4c()
     
 def q4a():
     # extract data
@@ -102,7 +102,7 @@ def q4c():
     cNum=20
     PCAmin=0
     PCAmax=100
-    PCAnum=2
+    PCAnum=100
 
     rbf, trainSVMY, testSVMY, trainX, testX, trainY, testY, testError, trainError, cvError, gamma, C, k, runTime, valErrors = ln.margin_svm(trainMatrix, testMatrix, PCA=PCA, matrixList1=[1], matrixList2=[0,2,3,4,5,6,7,8,9], gammaMin=gammaMin, gammaMax=gammaMax, gNum=gammaNum, cMin=cMin, cMax=cMax, cNum=cNum, PCAmin=PCAmin, PCAmax=PCAmax, PCAnum=PCAnum)
 
