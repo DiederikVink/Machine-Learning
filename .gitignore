@@ -1,0 +1,19 @@
+*/.DS_Store
+.DS_Store
+*/*.png
+*/*/*.pdf
+Assignment\ 1/*/*.test
+Assignment\ 1/*/*.train
+Assignment\ 1/*/*.info
+*/*/*/*.pdf
+*/*.eps
+*/*/*/*.out
+*/*/*.png
+*/files
+*/R
+*.swp
+*/bin/*.out
+*/src/*-backup*
+*/src/*.pyc
+*/movie-data/
+*/*.txt
