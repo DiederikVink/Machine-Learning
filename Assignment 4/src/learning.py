@@ -80,6 +80,8 @@ def margin_svm(trainMatrix, testMatrix, PCA, matrixList1, matrixList2, gammaMin,
                 kList.append(i)
         elif PCA == 2:
             kList = [2]
+        elif PCA == 3:
+            kList = [256]
     else:
         cList = [1]
         kList = [256]

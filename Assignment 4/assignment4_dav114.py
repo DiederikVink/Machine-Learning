@@ -135,7 +135,7 @@ def q4c():
     trainMatrix = dh.read_data('./data/features.train')
     testMatrix = dh.read_data('./data/features.test')
     
-    PCA = 0
+    PCA = 3
 
     print "\nFeature: "
 
